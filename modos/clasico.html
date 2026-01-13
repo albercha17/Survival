@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Survival · Clásico</title>
+
+<style>
+    body {
+        background: #0b0b0b;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .app {
+        width: 100%;
+        max-width: 380px;
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 12px;
+        letter-spacing: 2px;
+    }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 10px;
+        font-size: 1.05rem;
+        background: #1e1e1e;
+        color: #fff;
+        border: 2px solid #555;
+        border-radius: 10px;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: #111;
+        color: #fff;
+        border: 2px solid #444;
+        border-radius: 8px;
+    }
+
+    .hidden { display: none; }
+
+    /* ---------- SETUP ---------- */
+
+    .player {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        border-bottom: 1px solid #333;
+    }
+
+    .remove {
+        background: none;
+        border: none;
+        color: #ff5555;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    /* ---------- GAME ---------- */
+
+    .survivors {
+        font-size: 0.8rem;
+        opacity: 0.85;
+        margin-bottom: 10px;
+    }
+
+    .card {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+    }
+
+    .icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+    }
+
+    .muerte { background: #5a1a1a; }
+    .asesinato { background: #7a1212; }
+    .accion { background: #1f3a5a; }
+    .solo { background: #2f4f2f; }
+    .mundo { background: #3a3a3a; }
+    .victoria { background: #6b5b1a; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ================= SELECT ================= -->
+<div id="select">
+    <h2>MODO CLÁSICO</h2>
+    <div id="lists"></div>
+    <button onclick="activateFree()">Libre</button>
+</div>
+
+<!-- ================= SETUP ================= -->
+<div id="setup" class="hidden">
+    <button onclick="goBack()">← Volver</button>
+
+    <div id="freeInput" class="hidden">
+        <input id="nameInput" placeholder="Nombre del jugador">
+        <button onclick="addPlayer()">AÑADIR</button>
+    </div>
+
+    <div id="players"></div>
+    <button onclick="startGame()">EMPEZAR</button>
+</div>
+
+<!-- ================= GAME ================= -->
+<div id="game" class="hidden">
+    <div class="survivors" id="survivors"></div>
+
+    <div id="card" class="card mundo">
+        <div class="icon" id="icon">🌍</div>
+        <div id="text">Pulsa SIGUIENTE</div>
+    </div>
+
+    <button id="nextBtn" onclick="nextStep()">SIGUIENTE</button>
+    <button id="restartBtn" class="hidden" onclick="restart()">REINICIAR</button>
+    <button id="menuBtn" class="hidden" onclick="goMenu()">MENÚ PRINCIPAL</button>
+</div>
+
+</div>
+
+<script>
+/* ========== CONFIG ========= */
+const LISTS_PATH = "../listas/";
+const LIST_INDEX = LISTS_PATH + "listas.json";
+
+/* ========== STATE ========= */
+let players = [];
+let initialPlayers = [];
+let freeMode = false;
+
+/* ========== EVENTS ========= */
+const events = {
+    muerte: ["{A} muere durante la noche."],
+    asesinato: ["{A} asesina a {B}."],
+    accion: ["{A} traiciona a {B}.", "{A} ayuda a {B}."],
+    solo: ["{A} encuentra provisiones."],
+    mundo: ["Una tormenta arrasa el campamento."]
+};
+
+const icons = {
+    muerte: "💀",
+    asesinato: "🔪",
+    accion: "🤝",
+    solo: "🧍",
+    mundo: "🌍",
+    victoria: "👑"
+};
+
+const types = Object.keys(events);
+
+/* ========== INIT ========= */
+loadLists();
+
+/* ========== LISTS ========= */
+async function loadLists() {
+    const res = await fetch(LIST_INDEX);
+    const files = await res.json();
+    const container = document.getElementById("lists");
+
+    files.forEach(file => {
+        const btn = document.createElement("button");
+        btn.textContent = file.replace(".txt", "");
+        btn.onclick = () => loadList(file);
+        container.appendChild(btn);
+    });
+}
+
+async function loadList(file) {
+    const res = await fetch(LISTS_PATH + file);
+    players = (await res.text()).split("\n").map(l => l.trim()).filter(Boolean);
+    freeMode = false;
+    showSetup();
+}
+
+function activateFree() {
+    players = [];
+    freeMode = true;
+    showSetup();
+    document.getElementById("freeInput").classList.remove("hidden");
+}
+
+/* ========== SETUP ========= */
+function showSetup() {
+    document.getElementById("select").classList.add("hidden");
+    document.getElementById("setup").classList.remove("hidden");
+    renderPlayers();
+}
+
+function renderPlayers() {
+    const div = document.getElementById("players");
+    div.innerHTML = "";
+    players.forEach((p, i) => {
+        div.innerHTML += `
+            <div class="player">
+                ${p}
+                <button class="remove" onclick="removePlayer(${i})">❌</button>
+            </div>`;
+    });
+}
+
+function addPlayer() {
+    const input = document.getElementById("nameInput");
+    if (input.value.trim()) {
+        players.push(input.value.trim());
+        input.value = "";
+        renderPlayers();
+    }
+}
+
+function removePlayer(i) {
+    players.splice(i, 1);
+    renderPlayers();
+}
+
+function goBack() {
+    players = [];
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("select").classList.remove("hidden");
+    document.getElementById("freeInput").classList.add("hidden");
+}
+
+/* ========== GAME ========= */
+function startGame() {
+    initialPlayers = [...players];
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+    updateSurvivors();
+}
+
+function nextStep() {
+    if (players.length <= 1) return;
+
+    let type = types[Math.floor(Math.random() * types.length)];
+    let text = "";
+    let dead = null;
+
+    if (type === "muerte") {
+        dead = random(players);
+        text = events.muerte[0].replace("{A}", dead);
+    }
+
+    if (type === "asesinato" && players.length >= 2) {
+        const A = random(players);
+        const B = random(players.filter(p => p !== A));
+        dead = B;
+        text = events.asesinato[0].replace("{A}", A).replace("{B}", B);
+    }
+
+    if (type === "accion" && players.length >= 2) {
+        const A = random(players);
+        const B = random(players.filter(p => p !== A));
+        text = random(events.accion).replace("{A}", A).replace("{B}", B);
+    }
+
+    if (type === "solo") {
+        const A = random(players);
+        text = events.solo[0].replace("{A}", A);
+    }
+
+    if (type === "mundo") {
+        text = events.mundo[0];
+    }
+
+    if (dead) {
+        players = players.filter(p => p !== dead);
+        updateSurvivors();
+    }
+
+    renderCard(type, text);
+    checkEnd();
+}
+
+function renderCard(type, text) {
+    card.className = `card ${type}`;
+    icon.textContent = icons[type];
+    document.getElementById("text").textContent = text;
+}
+
+function updateSurvivors() {
+    document.getElementById("survivors").textContent = players.join(" · ");
+}
+
+function checkEnd() {
+    if (players.length === 1) {
+        renderCard("victoria", `${players[0]} es el único superviviente`);
+        nextBtn.classList.add("hidden");
+        restartBtn.classList.remove("hidden");
+        menuBtn.classList.remove("hidden");
+    }
+}
+
+function restart() {
+    players = [...initialPlayers];
+    updateSurvivors();
+    renderCard("mundo", "Pulsa SIGUIENTE");
+    nextBtn.classList.remove("hidden");
+    restartBtn.classList.add("hidden");
+    menuBtn.classList.add("hidden");
+}
+
+function goMenu() {
+    location.href = "../index.html";
+}
+
+/* ========== UTIL ========= */
+function random(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+</script>
+
+</body>
+</html>
