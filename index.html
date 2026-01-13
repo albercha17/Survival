@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Survival</title>
+
+    <style>
+        /* RESET BÁSICO */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: radial-gradient(circle at top, #2c2c2c, #0e0e0e);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            letter-spacing: 4px;
+            margin-bottom: 60px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .mode-button {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            background: linear-gradient(145deg, #4a4a4a, #1e1e1e);
+            color: #fff;
+            border: 2px solid #666;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-button:active {
+            transform: scale(0.97);
+            background: linear-gradient(145deg, #3a3a3a, #141414);
+        }
+
+        .mode-button:hover {
+            border-color: #aaa;
+        }
+
+        .subtitle {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>SURVIVAL</h1>
+
+        <button class="mode-button" onclick="startClassic()">
+            CLÁSICO
+        </button>
+
+        <div class="subtitle">
+            Juego de supervivencia
+        </div>
+    </div>
+
+    <script>
+        function startClassic() {
+            // Más adelante llevará al modo clásico
+            alert("Modo clásico próximamente");
+        }
+    </script>
+
+</body>
+</html>
