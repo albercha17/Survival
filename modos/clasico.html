@@ -6,133 +6,104 @@
 <title>Survival · Clásico</title>
 
 <style>
-    * {
-        box-sizing: border-box;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
+* {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
 
-    body {
-        margin: 0;
-        min-height: 100vh;
-        background: radial-gradient(circle at top, #1c1c1c, #0a0a0a);
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #1c1c1c, #0a0a0a);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-    .app {
-        width: 100%;
-        max-width: 390px;
-        padding: 24px 18px;
-        text-align: center;
-    }
+.app {
+    width: 100%;
+    max-width: 390px;
+    padding: 24px 18px;
+    text-align: center;
+}
 
-    h2 {
-        margin-bottom: 16px;
-        letter-spacing: 3px;
-        font-weight: 600;
-    }
+h2 {
+    margin-bottom: 16px;
+    letter-spacing: 3px;
+}
 
-    button {
-        width: 100%;
-        padding: 16px;
-        margin-bottom: 12px;
-        font-size: 1.1rem;
-        letter-spacing: 2px;
-        background: linear-gradient(#1f1f1f, #141414);
-        color: #fff;
-        border: 2px solid #555;
-        border-radius: 16px;
-        box-shadow: 0 8px 18px rgba(0,0,0,0.5);
-    }
+button {
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    background: linear-gradient(#1f1f1f, #141414);
+    color: #fff;
+    border: 2px solid #555;
+    border-radius: 16px;
+}
 
-    button:active {
-        transform: scale(0.97);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-    }
+button:active { transform: scale(0.97); }
 
-    input {
-        width: 100%;
-        padding: 14px;
-        margin-bottom: 12px;
-        background: #111;
-        color: #fff;
-        border: 2px solid #444;
-        border-radius: 12px;
-        font-size: 1rem;
-    }
+input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    background: #111;
+    color: #fff;
+    border: 2px solid #444;
+    border-radius: 12px;
+}
 
-    .hidden { display: none; }
+.hidden { display: none; }
 
-    /* ===== SETUP ===== */
+.player {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
 
-    .player {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        border-bottom: 1px solid #333;
-        font-size: 0.95rem;
-    }
+.remove {
+    background: none;
+    border: none;
+    color: #ff6666;
+    font-size: 1.3rem;
+}
 
-    .remove {
-        background: none;
-        border: none;
-        color: #ff6666;
-        font-size: 1.3rem;
-    }
+.survivors {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 12px;
+}
 
-    /* ===== GAME ===== */
+.card {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 22px;
+    margin: 16px 0 24px;
+    font-size: 1.15rem;
+}
 
-    .survivors {
-        font-size: 0.8rem;
-        opacity: 0.85;
-        margin-bottom: 12px;
-        line-height: 1.4;
-    }
+.icon {
+    font-size: 2.6rem;
+    margin-bottom: 14px;
+}
 
-    .card {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        max-height: 70vh;
-        border-radius: 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 22px;
-        margin: 16px 0 24px;
-        font-size: 1.15rem;
-        text-align: center;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.6);
-        animation: fadeIn 0.25s ease;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to { opacity: 1; transform: scale(1); }
-    }
-
-    .icon {
-        font-size: 2.6rem;
-        margin-bottom: 14px;
-    }
-
-    .muerte { background: #5a1a1a; }
-    .asesinato { background: #7a1212; }
-    .accion { background: #1f3a5a; }
-    .solo { background: #2f4f2f; }
-    .mundo { background: #3a3a3a; }
-    .victoria { background: #6b5b1a; }
-    .final { background: #3a1f5a; }
-
-    /* ===== SAFE AREA ===== */
-    @supports (padding: env(safe-area-inset-bottom)) {
-        .app {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-    }
+.muerte { background:#5a1a1a; }
+.asesinato { background:#7a1212; }
+.accion { background:#1f3a5a; }
+.solo { background:#2f4f2f; }
+.mundo { background:#3a3a3a; }
+.final { background:#3a1f5a; }
+.victoria { background:#6b5b1a; }
 </style>
 </head>
 
@@ -143,34 +114,28 @@
 <div id="select">
     <h2>MODO CLÁSICO</h2>
     <div id="lists"></div>
-    <button onclick="activateFree()" style="background:#a1a83b;border-color:#e7eb7e">LIBRE</button>
-    <button onclick="goMenu()" style="margin-bottom:20px;background:#3a1a1a;border-color:#aa4444">← VOLVER</button>
-
+    <button onclick="activateFree()">LIBRE</button>
+    <button onclick="goMenu()">← VOLVER</button>
 </div>
 
 <div id="setup" class="hidden">
-    <button onclick="goBack()" style="background:#3a1a1a;border-color:#aa4444">← VOLVER</button>
-
+    <button onclick="goBack()">← VOLVER</button>
     <div id="freeInput" class="hidden">
         <input id="nameInput" placeholder="Nombre del jugador">
         <button onclick="addPlayer()">AÑADIR</button>
     </div>
-
     <div id="players"></div>
     <button onclick="startGame()">EMPEZAR</button>
 </div>
 
 <div id="game" class="hidden">
-    <button onclick="exitGame()" style="background:#3a1a1a;border-color:#aa4444">
-    SALIR DE LA PARTIDA
-</button>
+    <button onclick="exitGame()">SALIR DE LA PARTIDA</button>
     <div class="survivors" id="survivors"></div>
 
     <div id="card" class="card mundo">
         <div class="icon" id="icon">🌍</div>
         <div id="text">Pulsa SIGUIENTE</div>
     </div>
-
 
     <button id="nextBtn" onclick="nextStep()">SIGUIENTE</button>
     <button id="restartBtn" class="hidden" onclick="restart()">REINICIAR</button>
@@ -180,777 +145,193 @@
 </div>
 
 <script>
+// ================= CONFIG =================
 const LISTS_PATH = "../listas/";
 const LIST_INDEX = LISTS_PATH + "listas.json";
+const ACTIONS_PATH = "../acciones/";
 
+// ================= DOM =================
+const select = document.getElementById("select");
+const setup = document.getElementById("setup");
+const game = document.getElementById("game");
+const freeInput = document.getElementById("freeInput");
+const nameInput = document.getElementById("nameInput");
+const playersEl = document.getElementById("players");
+const survivors = document.getElementById("survivors");
+const card = document.getElementById("card");
+const icon = document.getElementById("icon");
+const textEl = document.getElementById("text");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+const menuBtn = document.getElementById("menuBtn");
+
+// ================= STATE =================
 let players = [];
 let initialPlayers = [];
-
-/* ===== DUELO STATE ===== */
 let duelActive = false;
 let duelPlayers = [];
 let duelStep = 0;
 let duelLoser = null;
 
-/* ===== EVENTS ===== */
-const events = {
-muerte: [
-    "{A} muere mientras dormía. Nadie escucha nada.",
-    "{A} no sobrevive a la noche más fría.",
-    "{A} sucumbe a sus heridas lentamente.",
-    "{A} desaparece y jamás vuelve a verse.",
-    "{A} se desangra sin que nadie pueda ayudarle.",
-    "{A} muere de hambre, rodeado de comida inútil.",
-    "{A} bebe agua contaminada y cae fulminado.",
-    "{A} no supera una infección inesperada.",
-    "{A} se pierde en la oscuridad y muere solo.",
-    "{A} cae agotado y no vuelve a levantarse.",
-
-    "{A} muere intentando encender una hoguera.",
-    "{A} no calcula bien un salto y no sobrevive.",
-    "{A} muere aplastado mientras dormía.",
-    "{A} sufre un accidente absurdo y mortal.",
-    "{A} muere por confiar demasiado.",
-    "{A} muere por no confiar en nadie.",
-    "{A} no resiste la fiebre.",
-    "{A} muere tras comer algo que no debía.",
-    "{A} muere justo cuando parecía a salvo.",
-    "{A} muere en completo silencio.",
-
-    "{A} cae en una trampa antigua.",
-    "{A} muere por una mala decisión.",
-    "{A} muere por una decisión que parecía buena.",
-    "{A} muere defendiendo algo sin valor.",
-    "{A} muere intentando impresionar a los demás.",
-    "{A} muere por exceso de confianza.",
-    "{A} muere por miedo.",
-    "{A} muere por curiosidad.",
-    "{A} muere por no hacer nada.",
-    "{A} muere tras escuchar un ruido extraño.",
-
-    "{A} cae enfermo y no hay cura.",
-    "{A} muere durante una fuerte tormenta.",
-    "{A} es alcanzado por algo que nadie ve venir.",
-    "{A} muere atrapado.",
-    "{A} muere intentando escapar.",
-    "{A} muere tras una larga agonía.",
-    "{A} muere de forma rápida e inesperada.",
-    "{A} muere en un lugar aparentemente seguro.",
-    "{A} muere por no seguir las reglas.",
-    "{A} muere siguiendo las reglas.",
-
-    "{A} se queda atrás y no sobrevive.",
-    "{A} muere intentando ayudar a alguien.",
-    "{A} muere por no pedir ayuda.",
-    "{A} muere en un accidente tonto.",
-    "{A} muere por una cadena de malas decisiones.",
-    "{A} muere cuando todo parecía tranquilo.",
-    "{A} muere por subestimar la situación.",
-    "{A} muere por sobreestimar sus fuerzas.",
-    "{A} muere tras perder la esperanza.",
-    "{A} muere tras ganar demasiada esperanza.",
-
-    "{A} muere por una herida mal cerrada.",
-    "{A} muere por una caída absurda.",
-    "{A} muere mientras huía de algo inexistente.",
-    "{A} muere al intentar atajar un camino.",
-    "{A} muere por una distracción fatal.",
-    "{A} muere tras quedarse dormido en el peor momento.",
-    "{A} muere por un error de cálculo.",
-    "{A} muere sin saber qué pasó.",
-    "{A} muere tras escuchar su nombre en la oscuridad.",
-    "{A} muere en circunstancias confusas.",
-
-    "{A} muere tras un grito que nadie responde.",
-    "{A} muere por una mala apuesta.",
-    "{A} muere por no saber esperar.",
-    "{A} muere esperando demasiado.",
-    "{A} muere justo antes del amanecer.",
-    "{A} muere justo después del amanecer.",
-    "{A} muere por una reacción inesperada.",
-    "{A} muere tras tocar algo que no debía.",
-    "{A} muere por una cadena de pequeños errores.",
-    "{A} muere cuando nadie lo esperaba.",
-
-    "{A} muere por una decisión impulsiva.",
-    "{A} muere por pensarlo demasiado.",
-    "{A} muere en completo aislamiento.",
-    "{A} muere tras perder el equilibrio.",
-    "{A} muere tras confiar en el lugar equivocado.",
-    "{A} muere por no mirar atrás.",
-    "{A} muere por mirar atrás.",
-    "{A} muere tras una noche interminable.",
-    "{A} muere por una herida que parecía leve.",
-    "{A} muere sin llegar a entender qué pasó.",
-
-    "{A} muere tras tomar la peor opción posible.",
-    "{A} muere por una coincidencia fatal.",
-    "{A} muere por no escuchar las advertencias.",
-    "{A} muere escuchando demasiadas advertencias.",
-    "{A} muere por una confusión absurda.",
-    "{A} muere intentando hacer lo correcto.",
-    "{A} muere haciendo exactamente lo incorrecto.",
-    "{A} muere tras una mala noche.",
-    "{A} muere cuando el peligro parecía lejano.",
-    "{A} muere por una decisión tomada demasiado tarde.",
-
-    "{A} muere tras perder el rumbo.",
-    "{A} muere por no perderlo nunca.",
-    "{A} muere en un error perfectamente evitable.",
-    "{A} muere por no asumir riesgos.",
-    "{A} muere por asumir demasiados riesgos.",
-    "{A} muere tras una pausa fatal.",
-    "{A} muere justo después de suspirar aliviado.",
-    "{A} muere cuando todo parecía ir bien.",
-    "{A} muere sin que nadie pueda explicarlo.",
-    "{A} muere. Simplemente muere."
-],
-    asesinato: [
-    "{A} asesina a {B} mientras dormía.",
-    "{A} elimina a {B} sin hacer ruido.",
-    "{A} traiciona a {B} en el peor momento.",
-    "{A} acaba con la vida de {B} sin remordimientos.",
-    "{A} empuja a {B} cuando nadie mira.",
-    "{A} ataca por la espalda a {B}.",
-    "{A} finge ayudar a {B} y lo mata.",
-    "{A} asesina a {B} por pura supervivencia.",
-    "{A} decide que {B} es un problema y lo elimina.",
-    "{A} mata a {B} antes de que pueda reaccionar.",
-
-    "{A} convence a {B} de acercarse… y lo mata.",
-    "{A} asesina a {B} tras una discusión.",
-    "{A} elimina a {B} mientras todos duermen.",
-    "{A} sacrifica a {B} para salvarse.",
-    "{A} traiciona la confianza de {B} y lo mata.",
-    "{A} ataca a {B} cuando baja la guardia.",
-    "{A} mata a {B} por miedo.",
-    "{A} mata a {B} por desconfianza.",
-    "{A} mata a {B} porque cree que no hay otra opción.",
-    "{A} mata a {B} antes de que sea demasiado tarde.",
-
-    "{A} embosca a {B} sin darle oportunidad.",
-    "{A} engaña a {B} y lo conduce a la muerte.",
-    "{A} asesina a {B} mientras huían juntos.",
-    "{A} mata a {B} durante una pelea.",
-    "{A} aprovecha el caos para matar a {B}.",
-    "{A} mata a {B} en un arranque de ira.",
-    "{A} mata a {B} por un malentendido fatal.",
-    "{A} mata a {B} por una vieja rencilla.",
-    "{A} mata a {B} por una sospecha infundada.",
-    "{A} mata a {B} por una sospecha acertada.",
-
-    "{A} asesina a {B} cuando parecía todo tranquilo.",
-    "{A} elimina a {B} para ganar ventaja.",
-    "{A} mata a {B} durante una huida desesperada.",
-    "{A} mata a {B} sin explicar nada.",
-    "{A} mata a {B} con frialdad.",
-    "{A} mata a {B} en un acto impulsivo.",
-    "{A} mata a {B} tras pensarlo demasiado.",
-    "{A} mata a {B} tras pensarlo demasiado poco.",
-    "{A} mata a {B} por paranoia.",
-    "{A} mata a {B} para evitar riesgos.",
-
-    "{A} traiciona al grupo asesinando a {B}.",
-    "{A} asesina a {B} para imponer su autoridad.",
-    "{A} mata a {B} para dar ejemplo.",
-    "{A} mata a {B} para reducir bocas que alimentar.",
-    "{A} mata a {B} creyendo que así sobrevivirá.",
-    "{A} mata a {B} cuando nadie puede impedirlo.",
-    "{A} mata a {B} y finge que fue un accidente.",
-    "{A} mata a {B} aprovechando la oscuridad.",
-    "{A} mata a {B} durante una falsa tregua.",
-    "{A} mata a {B} tras prometerle ayuda.",
-
-    "{A} asesina a {B} por pura conveniencia.",
-    "{A} mata a {B} para quedarse con sus recursos.",
-    "{A} mata a {B} tras una mirada sospechosa.",
-    "{A} mata a {B} convencido de que era necesario.",
-    "{A} mata a {B} convencido… o eso dice.",
-    "{A} mata a {B} por una decisión calculada.",
-    "{A} mata a {B} por una decisión desesperada.",
-    "{A} mata a {B} porque deja de confiar en él.",
-    "{A} mata a {B} para no ser el siguiente.",
-    "{A} mata a {B}. Solo uno podía seguir vivo.",
-
-    "{A} asesina a {B} cuando el grupo se separa.",
-    "{A} mata a {B} en un momento de caos total.",
-    "{A} mata a {B} sin que nadie lo vea.",
-    "{A} mata a {B} y guarda silencio.",
-    "{A} mata a {B} para protegerse.",
-    "{A} mata a {B} para proteger a otros.",
-    "{A} mata a {B} creyendo hacer lo correcto.",
-    "{A} mata a {B} sabiendo que está mal.",
-    "{A} mata a {B} cuando ya no hay vuelta atrás.",
-    "{A} mata a {B}. El grupo nunca vuelve a ser el mismo."
-],
-
-    accion: [
-    "{A} se enamora perdidamente de {B}.",
-    "{A} y {B} se lían cuando nadie mira.",
-    "{A} habla fatal de {B} a sus espaldas.",
-    "{A} intenta ligar con {B} sin ningún éxito.",
-    "{A} flirtea descaradamente con {B}.",
-    "{A} se pone celoso de {B} sin motivo.",
-    "{A} y {B} discuten por una tontería absurda.",
-    "{A} y {B} hacen las paces de forma incómoda.",
-    "{A} promete proteger a {B}, aunque no sabe cómo.",
-    "{A} y {B} forman una alianza sospechosa.",
-
-    "{A} se lía con {B} y luego lo niega todo.",
-    "{A} acusa a {B} de algo completamente inventado.",
-    "{A} y {B} se ríen del resto del grupo.",
-    "{A} intenta manipular a {B}, pero falla estrepitosamente.",
-    "{A} manipula a {B} con sorprendente facilidad.",
-    "{A} y {B} se ponen verdes mutuamente.",
-    "{A} critica cada movimiento de {B}.",
-    "{A} defiende a {B} de forma exagerada.",
-    "{A} y {B} comparten un momento muy incómodo.",
-    "{A} ignora completamente a {B}.",
-
-    "{A} y {B} se vuelven inseparables durante un rato.",
-    "{A} intenta quedar bien con {B} y queda fatal.",
-    "{A} se burla de {B} delante de todos.",
-    "{A} y {B} hacen un pacto secreto.",
-    "{A} rompe un pacto con {B} sin avisar.",
-    "{A} culpa a {B} de algo que hizo él.",
-    "{A} se chiva de {B} para quedar bien.",
-    "{A} intenta convencer a {B} de una idea absurda.",
-    "{A} y {B} planean algo que probablemente salga mal.",
-    "{A} se inventa un rumor sobre {B}.",
-
-    "{A} cree que {B} está conspirando contra él.",
-    "{A} y {B} conspiran… o eso parece.",
-    "{A} se ríe de una desgracia menor de {B}.",
-    "{A} ayuda a {B} solo para poder echarlo en cara después.",
-    "{A} se disculpa con {B} sin saber muy bien por qué.",
-    "{A} y {B} compiten por algo completamente inútil.",
-    "{A} y {B} hacen equipo por pura conveniencia.",
-    "{A} se pone dramático delante de {B}.",
-    "{A} y {B} comparten un secreto vergonzoso.",
-    "{A} observa a {B} desde la distancia.",
-
-    "{A} acecha a {B} durante horas.",
-    "{A} sigue a {B} sin que se dé cuenta.",
-    "{A} espía los movimientos de {B}.",
-    "{A} intimida a {B} con una mirada.",
-    "{A} amenaza veladamente a {B}.",
-    "{A} empuja a {B} durante una discusión.",
-    "{A} intenta atacar a {B}, pero no llega a hacerlo.",
-    "{A} acorrala a {B} para asustarlo.",
-    "{A} provoca a {B} buscando una reacción.",
-    "{A} arrincona a {B} psicológicamente.",
-
-    "{A} tiende una trampa a {B}, pero no funciona.",
-    "{A} hace creer a {B} que corre peligro.",
-    "{A} se enfrenta cara a cara con {B}.",
-    "{A} se encara con {B} delante de todos.",
-    "{A} intimida a {B} para ganar ventaja.",
-    "{A} pone nervioso a {B} deliberadamente.",
-    "{A} presiona a {B} para que cometa un error.",
-    "{A} juega con el miedo de {B}.",
-    "{A} amenaza a {B} sin llegar a nada.",
-    "{A} deja claro a {B} que no se puede confiar en él.",
-
-    "{A} vigila cada movimiento de {B}.",
-    "{A} hace sentir incómodo a {B}.",
-    "{A} pone a prueba la paciencia de {B}.",
-    "{A} y {B} se enfrentan en una discusión tensa.",
-    "{A} provoca a {B} solo por diversión.",
-    "{A} se mete en la cabeza de {B}.",
-    "{A} intimida a {B} sin decir una palabra.",
-    "{A} se gana la enemistad de {B}.",
-    "{A} convierte a {B} en su objetivo.",
-    "{A} deja a {B} claro que esto no ha terminado."
-],
-
-    solo: [
-    "{A} se queda pensando demasiado tiempo.",
-    "{A} encuentra provisiones inesperadas.",
-    "{A} habla solo durante horas.",
-    "{A} reflexiona sobre todas sus malas decisiones.",
-    "{A} pierde algo importante y no sabe qué.",
-    "{A} se convence de que todo va a salir bien.",
-    "{A} canta en voz alta para no volverse loco.",
-    "{A} se da cuenta de que nada es como esperaba.",
-    "{A} se tropieza solo y finge que no ha pasado.",
-    "{A} empieza a perder la esperanza.",
-
-    "{A} se queda mirando al vacío demasiado rato.",
-    "{A} encuentra algo útil… o eso cree.",
-    "{A} practica discursos para cuando sea el líder.",
-    "{A} se plantea si ha llegado demasiado lejos.",
-    "{A} se asusta con su propia sombra.",
-    "{A} asume que tendrá que hacer cosas terribles.",
-    "{A} se ríe solo sin ningún motivo.",
-    "{A} se prepara mentalmente para lo peor.",
-    "{A} intenta dormir y no puede.",
-    "{A} acepta que el mundo ya no es seguro.",
-
-    "{A} se inventa un plan completamente absurdo.",
-    "{A} se da cuenta de que nadie le escucha.",
-    "{A} ensaya una conversación que nunca tendrá.",
-    "{A} se siente observado.",
-    "{A} habla con un objeto como si fuera una persona.",
-    "{A} empieza a desconfiar incluso de sí mismo.",
-    "{A} pierde la noción del tiempo.",
-    "{A} se pregunta cuánto durará todo esto.",
-    "{A} decide que hoy no va a hacer nada útil.",
-    "{A} se promete no cometer más errores.",
-
-    "{A} se distrae con algo completamente irrelevante.",
-    "{A} recuerda tiempos mejores.",
-    "{A} se queda dormido en el peor sitio posible.",
-    "{A} se da cuenta de que ha cambiado.",
-    "{A} hace algo estúpido por aburrimiento.",
-    "{A} se pregunta quién será el siguiente.",
-    "{A} practica miradas intimidantes delante de nadie.",
-    "{A} se prepara para un final que prefiere no imaginar.",
-    "{A} se convence de que tiene todo bajo control.",
-    "{A} siente que lo está perdiendo todo.",
-
-    "{A} habla consigo mismo y se responde.",
-    "{A} se da cuenta de que está completamente solo.",
-    "{A} se entretiene con algo sin importancia.",
-    "{A} empieza a aceptar la situación.",
-    "{A} se inventa una excusa para no hacer nada.",
-    "{A} se endurece emocionalmente.",
-    "{A} se distrae imaginando escenarios imposibles.",
-    "{A} asume que la supervivencia tiene un precio.",
-    "{A} se tropieza otra vez con el mismo sitio.",
-    "{A} se promete sobrevivir a cualquier coste.",
-
-    "{A} se ríe en el momento menos apropiado.",
-    "{A} se enfrenta a sus propios miedos.",
-    "{A} pierde el tiempo deliberadamente.",
-    "{A} se da cuenta de que el tiempo se agota.",
-    "{A} se inventa un ritual extraño.",
-    "{A} se mentaliza para tomar decisiones duras.",
-    "{A} se queda quieto, escuchando cada sonido.",
-    "{A} se da cuenta de que no hay vuelta atrás.",
-    "{A} decide que mañana será diferente.",
-    "{A} acepta que sobrevivir no significa ganar."
-],
-
-    mundo: [
-    "Una tormenta inesperada sacude toda la zona.",
-    "El silencio se vuelve inquietante.",
-    "Algo explota a lo lejos… nadie sabe qué.",
-    "Un viento extraño lo revuelve todo.",
-    "El cielo adquiere un color preocupante.",
-    "Todo queda en una calma demasiado sospechosa.",
-    "Se oyen ruidos extraños durante horas.",
-    "El frío se vuelve más intenso de repente.",
-    "Una niebla espesa cubre el lugar.",
-    "El entorno parece observar en silencio.",
-
-    "Una lluvia torrencial lo empapa todo.",
-    "La noche llega antes de lo esperado.",
-    "Un ruido metálico resuena en la distancia.",
-    "El calor se vuelve insoportable.",
-    "Algo se mueve entre las sombras.",
-    "Una sacudida hace temblar el suelo.",
-    "El día transcurre con una normalidad inquietante.",
-    "Un olor extraño se extiende por el ambiente.",
-    "El cielo se oscurece sin explicación.",
-    "Todo parece demasiado tranquilo.",
-
-    "Un apagón total deja el mundo en penumbra.",
-    "La naturaleza parece volverse hostil.",
-    "Un eco lejano rompe el silencio.",
-    "La lluvia cae de forma irregular y molesta.",
-    "El suelo cruje bajo los pies.",
-    "Una alarma distante suena y se apaga.",
-    "El viento trae sonidos imposibles.",
-    "El entorno se vuelve confuso y caótico.",
-    "Algo cambia… pero nadie sabe qué.",
-    "La sensación de peligro aumenta.",
-
-    "Un estruendo sacude el horizonte.",
-    "La noche se llena de ruidos inquietantes.",
-    "Un temblor leve pone a todos en alerta.",
-    "La luz se comporta de forma extraña.",
-    "El aire se vuelve pesado.",
-    "Una explosión lejana ilumina el cielo.",
-    "El tiempo parece pasar más lento.",
-    "Una sombra enorme cruza el paisaje.",
-    "El mundo parece perder el equilibrio.",
-    "Todo se siente fuera de lugar.",
-
-    "Un ruido constante vuelve loco a cualquiera.",
-    "El cielo amenaza con algo peor.",
-    "Una vibración recorre el suelo.",
-    "La sensación de seguridad desaparece.",
-    "Una tormenta eléctrica estalla sin aviso.",
-    "El entorno se vuelve opresivo.",
-    "Algo colapsa en la distancia.",
-    "El silencio se rompe de forma abrupta.",
-    "Una ráfaga violenta lo sacude todo.",
-    "El mundo parece deteriorarse.",
-
-    "Una nube extraña cubre la zona.",
-    "El ambiente se vuelve irrespirable.",
-    "Un estruendo repetitivo no deja pensar.",
-    "La noche es más oscura de lo normal.",
-    "Un temblor más fuerte de lo habitual ocurre.",
-    "El paisaje cambia ligeramente.",
-    "Algo se derrumba lejos de allí.",
-    "El viento no deja de soplar.",
-    "La sensación de final se hace presente.",
-    "El entorno parece reaccionar.",
-
-    "Un día pasa sin que ocurra nada… y eso inquieta.",
-    "Un sonido agudo atraviesa el aire.",
-    "La naturaleza guarda un silencio absoluto.",
-    "Una sacudida inesperada lo descoloca todo.",
-    "El cielo se cubre de nubes negras.",
-    "El aire se vuelve extraño al respirar.",
-    "Un ruido profundo retumba durante minutos.",
-    "La sensación de amenaza crece.",
-    "El mundo parece colapsar poco a poco.",
-    "Algo grande está a punto de pasar."
-]
-};
-
-const duelActions = [
-    "{A} ataca a {B}, pero {B} esquiva por los pelos.",
-    "{B} contraataca y obliga a {A} a retroceder.",
-    "{A} lanza un golpe torpe que casi lo deja vendido.",
-    "{B} empuja a {A} contra el suelo con brutalidad.",
-    "{A} y {B} se miden en silencio, buscando un error.",
-
-    "{A} intenta intimidar a {B} con una mirada salvaje.",
-    "{B} se ríe nerviosamente y se lanza contra {A}.",
-    "{A} tropieza al atacar y {B} aprovecha la ocasión.",
-    "{B} falla un golpe claro y maldice en voz alta.",
-    "{A} bloquea el ataque de {B} en el último segundo.",
-
-    "{A} golpea sin pensar y deja todo a la suerte.",
-    "{B} esquiva con un movimiento torpe pero efectivo.",
-    "{A} y {B} ruedan por el suelo luchando sin control.",
-    "{B} araña a {A} intentando zafarse.",
-    "{A} recibe un golpe duro pero se mantiene en pie.",
-
-    "{A} intenta un ataque desesperado lleno de rabia.",
-    "{B} responde con violencia, sin contenerse.",
-    "{A} y {B} intercambian golpes sin defenderse.",
-    "{B} empuja a {A} al límite del combate.",
-    "{A} aguanta a duras penas, sangrando.",
-
-    "{A} lanza un ataque absurdo que nadie esperaba.",
-    "{B} se confía demasiado y casi lo paga caro.",
-    "{A} finge estar cansado para engañar a {B}.",
-    "{B} duda un segundo… y eso casi le cuesta el combate.",
-    "{A} y {B} jadean, exhaustos, pero ninguno cede.",
-
-    "{A} ataca gritando algo completamente incoherente.",
-    "{B} esquiva riéndose, pero el miedo es evidente.",
-    "{A} y {B} chocan de frente como animales acorralados."
-];
-
-
-const duelDeaths = [
-    "{A} asesta el golpe final. {B} cae sin vida.",
-    "{B} no logra levantarse tras el ataque definitivo de {A}.",
-    "{A} atraviesa a {B}. No hay supervivencia.",
-    "{B} cae de rodillas antes de desplomarse. {A} ha ganado.",
-    "{A} remata a {B} sin dudarlo.",
-
-    "{B} intenta reaccionar, pero {A} es más rápido y lo mata.",
-    "{A} acaba con {B} en un movimiento seco y preciso.",
-    "{B} cae tras un golpe brutal de {A}.",
-    "{A} deja a {B} sin posibilidad de seguir luchando.",
-    "{B} muere mientras {A} observa en silencio.",
-
-    "{A} golpea una última vez. {B} no vuelve a moverse.",
-    "{B} cae al suelo, derrotado por {A}.",
-    "{A} atraviesa a {B} sin mostrar emoción.",
-    "{B} cae tras un ataque desesperado de {A}.",
-    "{A} empuja a {B} más allá del límite. Fin del combate.",
-
-    "{B} intenta decir algo, pero {A} lo silencia para siempre.",
-    "{A} acaba con {B} de la forma más cruel posible.",
-    "{B} cae lentamente mientras {A} se aleja.",
-    "{A} deja a {B} tendido, sin vida.",
-    "{B} muere mirando a {A} por última vez.",
-
-    "{A} vence tras un golpe final brutal.",
-    "{B} no sobrevive al último ataque de {A}.",
-    "{A} destroza cualquier esperanza. {B} muere.",
-    "{B} cae tras resistir más de lo que debía.",
-    "{A} remata a {B} cuando ya no puede defenderse.",
-
-    "{B} cae con un suspiro final. {A} gana.",
-    "{A} decide que el duelo termina aquí. {B} muere.",
-    "{B} no vuelve a levantarse tras el golpe de {A}.",
-    "{A} pone fin al combate acabando con {B}.",
-    "{B} muere. {A} es el único que queda en pie."
-];
-
+// ================= EVENTS =================
+let events = { muerte:[], asesinato:[], accion:[], solo:[], mundo:[] };
+let duelActions = [];
+let duelDeaths = [];
 
 const icons = {
-    muerte: "💀",
-    asesinato: "🔪",
-    accion: "🤝",
-    solo: "🧍",
-    mundo: "🌍",
-    final: "⚔️",
-    victoria: "👑"
+    muerte:"💀", asesinato:"🔪", accion:"🤝",
+    solo:"🧍", mundo:"🌍", final:"⚔️", victoria:"👑"
 };
 
+// ================= LOAD ACTIONS =================
+async function loadActions() {
+    const map = {
+        muerte:"muerte.json",
+        asesinato:"asesinato.json",
+        accion:"accion.json",
+        solo:"solo.json",
+        mundo:"mundo.json"
+    };
 
-/* ===== EVENT POOLS (SIN REPETICIONES) ===== */
-
-const eventPools = {};
-const duelActionPool = [];
-const duelDeathPool = [];
-
-// Baraja un array (Fisher-Yates)
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
-
-// Inicializa todos los mazos
-function initEventPools() {
-    for (const type in events) {
-        eventPools[type] = [...events[type]];
-        shuffle(eventPools[type]);
+    for (const t in map) {
+        const res = await fetch(ACTIONS_PATH + map[t]);
+        events[t] = await res.json();
     }
 
-    duelActionPool.length = 0;
-    duelActionPool.push(...duelActions);
-    shuffle(duelActionPool);
-
-    duelDeathPool.length = 0;
-    duelDeathPool.push(...duelDeaths);
-    shuffle(duelDeathPool);
-}
-function getEvent(type) {
-    if (!eventPools[type] || eventPools[type].length === 0) {
-        eventPools[type] = [...events[type]];
-        shuffle(eventPools[type]);
-    }
-    return eventPools[type].pop();
+    duelActions = await (await fetch(ACTIONS_PATH + "duelo_acciones.json")).json();
+    duelDeaths = await (await fetch(ACTIONS_PATH + "duelo_muertes.json")).json();
 }
 
-function getDuelAction() {
-    if (duelActionPool.length === 0) {
-        duelActionPool.push(...duelActions);
-        shuffle(duelActionPool);
-    }
-    return duelActionPool.pop();
+// ================= POOLS =================
+const pools = {};
+let duelActionPool = [];
+let duelDeathPool = [];
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} }
+
+function initPools(){
+    for(const t in events){ pools[t]=[...events[t]]; shuffle(pools[t]); }
+    duelActionPool=[...duelActions]; shuffle(duelActionPool);
+    duelDeathPool=[...duelDeaths]; shuffle(duelDeathPool);
 }
 
-function getDuelDeath() {
-    if (duelDeathPool.length === 0) {
-        duelDeathPool.push(...duelDeaths);
-        shuffle(duelDeathPool);
-    }
-    return duelDeathPool.pop();
-}
+function getEvent(t){ if(!pools[t].length){pools[t]=[...events[t]];shuffle(pools[t]);} return pools[t].pop(); }
+function getDuelAction(){ if(!duelActionPool.length){duelActionPool=[...duelActions];shuffle(duelActionPool);} return duelActionPool.pop(); }
+function getDuelDeath(){ if(!duelDeathPool.length){duelDeathPool=[...duelDeaths];shuffle(duelDeathPool);} return duelDeathPool.pop(); }
 
-loadLists();
-
-/* ===== LISTS ===== */
-async function loadLists() {
-    const res = await fetch(LIST_INDEX);
-    const files = await res.json();
-    const container = document.getElementById("lists");
-    container.innerHTML = "";
-
-    files.forEach(file => {
-        const name = file
-            .replace(".txt", "")
-            .replace(/([a-z])([A-Z])/g, "$1 $2")
-            .toUpperCase();
-
-        const btn = document.createElement("button");
-        btn.textContent = name;
-        btn.onclick = () => loadList(file);
-        container.appendChild(btn);
+// ================= LISTS =================
+async function loadLists(){
+    const files = await (await fetch(LIST_INDEX)).json();
+    const c = document.getElementById("lists");
+    c.innerHTML="";
+    files.forEach(f=>{
+        const b=document.createElement("button");
+        b.textContent=f.replace(".txt","").replace(/([a-z])([A-Z])/g,"$1 $2").toUpperCase();
+        b.onclick=()=>loadList(f);
+        c.appendChild(b);
     });
 }
 
-
-async function loadList(file) {
-    const res = await fetch(LISTS_PATH + file);
-    players = (await res.text()).split("\n").map(l => l.trim()).filter(Boolean);
+async function loadList(f){
+    players=(await (await fetch(LISTS_PATH+f)).text()).split("\n").map(x=>x.trim()).filter(Boolean);
     showSetup();
 }
 
-function activateFree() {
-    players = [];
-    showSetup();
-    document.getElementById("freeInput").classList.remove("hidden");
-}
+function activateFree(){ players=[]; showSetup(); freeInput.classList.remove("hidden"); }
 
-/* ===== SETUP ===== */
-function showSetup() {
-    select.classList.add("hidden");
-    setup.classList.remove("hidden");
-    renderPlayers();
-}
+// ================= SETUP =================
+function showSetup(){ select.classList.add("hidden"); setup.classList.remove("hidden"); renderPlayers(); }
+function renderPlayers(){ playersEl.innerHTML=""; players.forEach((p,i)=>playersEl.innerHTML+=`<div class="player">${p}<button class="remove" onclick="removePlayer(${i})">❌</button></div>`); }
+function addPlayer(){ if(nameInput.value.trim()){ players.push(nameInput.value.trim()); nameInput.value=""; renderPlayers(); } }
+function removePlayer(i){ players.splice(i,1); renderPlayers(); }
+function goBack(){ players=[]; setup.classList.add("hidden"); select.classList.remove("hidden"); freeInput.classList.add("hidden"); }
 
-function renderPlayers() {
-    playersEl = document.getElementById("players");
-    playersEl.innerHTML = "";
-    players.forEach((p, i) => {
-        playersEl.innerHTML += `
-            <div class="player">${p}
-            <button class="remove" onclick="removePlayer(${i})">❌</button>
-            </div>`;
-    });
-}
-
-function addPlayer() {
-    if (nameInput.value.trim()) {
-        players.push(nameInput.value.trim());
-        nameInput.value = "";
-        renderPlayers();
-    }
-}
-
-function removePlayer(i) {
-    players.splice(i, 1);
-    renderPlayers();
-}
-
-function goBack() {
-    players = [];
-    setup.classList.add("hidden");
-    select.classList.remove("hidden");
-    freeInput.classList.add("hidden");
-}
-
-/* ===== GAME ===== */function startGame() {
-    initialPlayers = [...players];
-    initEventPools(); // 👈 IMPORTANTE
+// ================= GAME =================
+function startGame(){
+    initialPlayers=[...players];
+    initPools();
     setup.classList.add("hidden");
     game.classList.remove("hidden");
     updateSurvivors();
 }
 
-
-
-function nextStep() {
-
-    /* ===== DUEL MODE ===== */
-    if (duelActive) {
-
-        if (duelStep === 0) {
-            renderCard("final", `⚔️ Empieza el duelo entre ${duelPlayers[0]} y ${duelPlayers[1]}`);
-            duelStep++;
-            return;
+function nextStep(){
+    if(duelActive){
+        if(duelStep===0){ renderCard("final",`⚔️ Duelo entre ${duelPlayers[0]} y ${duelPlayers[1]}`); duelStep++; return; }
+        if(duelStep<4){
+            renderCard("final",getDuelAction().replace("{A}",duelPlayers[0]).replace("{B}",duelPlayers[1]));
+            duelStep++; return;
         }
-
-        if (duelStep < 4) {
-            const A = duelPlayers[0];
-            const B = duelPlayers[1];
-            renderCard("final", getDuelAction().replace("{A}", A).replace("{B}", B));
-            duelStep++;
-            return;
-        }
-
-        if (!duelLoser) {
-            const winner = random(duelPlayers);
-            duelLoser = duelPlayers.find(p => p !== winner);
-            players = [winner];
+        if(!duelLoser){
+            const winner=random(duelPlayers);
+            duelLoser=duelPlayers.find(p=>p!==winner);
+            players=[winner];
             updateSurvivors();
-            renderCard("muerte", getDuelDeath().replace("{A}", winner).replace("{B}", duelLoser));
+            renderCard("muerte",getDuelDeath().replace("{A}",winner).replace("{B}",duelLoser));
             return;
         }
-
-        duelActive = false;
-        checkEnd();
-        return;
+        duelActive=false; checkEnd(); return;
     }
 
-    if (players.length === 2) {
-        duelActive = true;
-        duelPlayers = [...players];
-        duelStep = 0;
-        duelLoser = null;
-        nextStep();
-        return;
+    if(players.length===2){ duelActive=true; duelPlayers=[...players]; duelStep=0; duelLoser=null; nextStep(); return; }
+    if(players.length<=1) return;
+
+    const types=["muerte","accion","solo","mundo","asesinato"];
+    const type=random(types);
+    let dead=null, text="";
+
+    if(type==="muerte"){ dead=random(players); text=getEvent("muerte").replace("{A}",dead); }
+    if(type==="accion"){
+        const A=random(players), B=random(players.filter(p=>p!==A));
+        text=getEvent("accion").replace("{A}",A).replace("{B}",B);
+    }
+    if(type==="solo"){ text=getEvent("solo").replace("{A}",random(players)); }
+    if(type==="mundo"){ text=getEvent("mundo"); }
+    if(type==="asesinato"){
+        const A=random(players), B=random(players.filter(p=>p!==A));
+        dead=B;
+        text=getEvent("asesinato").replace("{A}",A).replace("{B}",B);
     }
 
-    if (players.length <= 1) return;
-
-    const types = ["muerte", "solo", "mundo","asesinato"];
-    const type = random(types);
-    let dead = null;
-    let text = "";
-
-    if (type === "muerte") {
-        dead = random(players);
-        text = getEvent("muerte").replace("{A}", dead);
-    }
-    if (type === "solo") {
-        text = getEvent("solo").replace("{A}", random(players));
-    }
-    if (type === "mundo") {
-        text = getEvent("mundo");
-    }
-    if (type === "asesinato") {
-    const A = random(players);
-    const B = random(players.filter(p => p !== A));
-    dead = B;
-    text = getEvent("asesinato").replace("{A}", A).replace("{B}", B);
-    }
-
-    if (dead) {
-        players = players.filter(p => p !== dead);
-        updateSurvivors();
-    }
-
-    renderCard(type, text);
+    if(dead){ players=players.filter(p=>p!==dead); updateSurvivors(); }
+    renderCard(type,text);
     checkEnd();
 }
 
-function renderCard(type, text) {
-    card.className = `card ${type}`;
-    icon.textContent = icons[type];
-    document.getElementById("text").textContent = text;
+function renderCard(type,text){
+    card.className=`card ${type}`;
+    icon.textContent=icons[type];
+    textEl.textContent=text;
 }
 
-function updateSurvivors() {
-    survivors.textContent = players.join(" · ");
-}
+function updateSurvivors(){ survivors.textContent=players.join(" · "); }
 
-function checkEnd() {
-    if (players.length === 1) {
-        renderCard("victoria", `${players[0]} es el único superviviente`);
+function checkEnd(){
+    if(players.length===1){
+        renderCard("victoria",`${players[0]} es el único superviviente`);
         nextBtn.classList.add("hidden");
         restartBtn.classList.remove("hidden");
         menuBtn.classList.remove("hidden");
     }
 }
 
-function restart() {
-    players = [...initialPlayers];
-    duelActive = false;
+function restart(){
+    players=[...initialPlayers];
+    duelActive=false;
+    initPools();
     updateSurvivors();
-    renderCard("mundo", "Pulsa SIGUIENTE");
+    renderCard("mundo","Pulsa SIGUIENTE");
     nextBtn.classList.remove("hidden");
     restartBtn.classList.add("hidden");
     menuBtn.classList.add("hidden");
 }
 
-function goMenu() {
-    location.href = "../index.html";
-}
+function goMenu(){ location.href="../index.html"; }
+function exitGame(){ if(confirm("¿Salir de la partida?")) location.href="../index.html"; }
+function random(a){ return a[Math.floor(Math.random()*a.length)]; }
 
-function random(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-function exitGame() {
-    if (confirm("¿Seguro que quieres salir de la partida?")) {
-        location.href = "../index.html";
-    }
-}
-
+// ================= INIT =================
+(async()=>{ await loadActions(); loadLists(); })();
 </script>
 
 </body>
