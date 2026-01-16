@@ -6,12 +6,16 @@
 <title>Survival · Clásico</title>
 
 <style>
+    * {
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
     body {
-        background: #0b0b0b;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        padding: 20px;
+        margin: 0;
         min-height: 100vh;
+        background: radial-gradient(circle at top, #1c1c1c, #0a0a0a);
+        color: #fff;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -19,77 +23,100 @@
 
     .app {
         width: 100%;
-        max-width: 380px;
+        max-width: 390px;
+        padding: 24px 18px;
         text-align: center;
     }
 
     h2 {
-        margin-bottom: 12px;
-        letter-spacing: 2px;
+        margin-bottom: 16px;
+        letter-spacing: 3px;
+        font-weight: 600;
     }
 
     button {
         width: 100%;
-        padding: 14px;
-        margin-bottom: 10px;
-        font-size: 1.05rem;
-        background: #1e1e1e;
+        padding: 16px;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        background: linear-gradient(#1f1f1f, #141414);
         color: #fff;
         border: 2px solid #555;
-        border-radius: 10px;
+        border-radius: 16px;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.5);
     }
 
-    button:active { transform: scale(0.97); }
+    button:active {
+        transform: scale(0.97);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
 
     input {
         width: 100%;
-        padding: 12px;
-        margin-bottom: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
         background: #111;
         color: #fff;
         border: 2px solid #444;
-        border-radius: 8px;
+        border-radius: 12px;
+        font-size: 1rem;
     }
 
     .hidden { display: none; }
 
+    /* ===== SETUP ===== */
+
     .player {
         display: flex;
         justify-content: space-between;
-        padding: 8px;
+        align-items: center;
+        padding: 10px;
         border-bottom: 1px solid #333;
+        font-size: 0.95rem;
     }
 
     .remove {
         background: none;
         border: none;
-        color: #ff5555;
-        font-size: 1.2rem;
-        cursor: pointer;
+        color: #ff6666;
+        font-size: 1.3rem;
     }
+
+    /* ===== GAME ===== */
 
     .survivors {
         font-size: 0.8rem;
         opacity: 0.85;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        line-height: 1.4;
     }
 
     .card {
         width: 100%;
         aspect-ratio: 1 / 1;
-        border-radius: 16px;
+        max-height: 70vh;
+        border-radius: 22px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 20px;
-        margin-bottom: 20px;
-        font-size: 1.1rem;
+        padding: 22px;
+        margin: 16px 0 24px;
+        font-size: 1.15rem;
+        text-align: center;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
     }
 
     .icon {
-        font-size: 2.5rem;
-        margin-bottom: 12px;
+        font-size: 2.6rem;
+        margin-bottom: 14px;
     }
 
     .muerte { background: #5a1a1a; }
@@ -99,6 +126,13 @@
     .mundo { background: #3a3a3a; }
     .victoria { background: #6b5b1a; }
     .final { background: #3a1f5a; }
+
+    /* ===== SAFE AREA ===== */
+    @supports (padding: env(safe-area-inset-bottom)) {
+        .app {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
 </style>
 </head>
 
@@ -109,11 +143,11 @@
 <div id="select">
     <h2>MODO CLÁSICO</h2>
     <div id="lists"></div>
-    <button onclick="activateFree()">Libre</button>
+    <button onclick="activateFree()">LIBRE</button>
 </div>
 
 <div id="setup" class="hidden">
-    <button onclick="goBack()">← Volver</button>
+    <button onclick="goBack()">← VOLVER</button>
 
     <div id="freeInput" class="hidden">
         <input id="nameInput" placeholder="Nombre del jugador">
