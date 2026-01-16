@@ -697,6 +697,60 @@ const icons = {
     victoria: "👑"
 };
 
+
+/* ===== EVENT POOLS (SIN REPETICIONES) ===== */
+
+const eventPools = {};
+const duelActionPool = [];
+const duelDeathPool = [];
+
+// Baraja un array (Fisher-Yates)
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Inicializa todos los mazos
+function initEventPools() {
+    for (const type in events) {
+        eventPools[type] = [...events[type]];
+        shuffle(eventPools[type]);
+    }
+
+    duelActionPool.length = 0;
+    duelActionPool.push(...duelActions);
+    shuffle(duelActionPool);
+
+    duelDeathPool.length = 0;
+    duelDeathPool.push(...duelDeaths);
+    shuffle(duelDeathPool);
+}
+function getEvent(type) {
+    if (!eventPools[type] || eventPools[type].length === 0) {
+        eventPools[type] = [...events[type]];
+        shuffle(eventPools[type]);
+    }
+    return eventPools[type].pop();
+}
+
+function getDuelAction() {
+    if (duelActionPool.length === 0) {
+        duelActionPool.push(...duelActions);
+        shuffle(duelActionPool);
+    }
+    return duelActionPool.pop();
+}
+
+function getDuelDeath() {
+    if (duelDeathPool.length === 0) {
+        duelDeathPool.push(...duelDeaths);
+        shuffle(duelDeathPool);
+    }
+    return duelDeathPool.pop();
+}
+
 loadLists();
 
 /* ===== LISTS ===== */
@@ -770,13 +824,15 @@ function goBack() {
     freeInput.classList.add("hidden");
 }
 
-/* ===== GAME ===== */
-function startGame() {
+/* ===== GAME ===== */function startGame() {
     initialPlayers = [...players];
+    initEventPools(); // 👈 IMPORTANTE
     setup.classList.add("hidden");
     game.classList.remove("hidden");
     updateSurvivors();
 }
+
+
 
 function nextStep() {
 
@@ -792,7 +848,7 @@ function nextStep() {
         if (duelStep < 4) {
             const A = duelPlayers[0];
             const B = duelPlayers[1];
-            renderCard("final", random(duelActions).replace("{A}", A).replace("{B}", B));
+            renderCard("final", getDuelAction().replace("{A}", A).replace("{B}", B));
             duelStep++;
             return;
         }
@@ -802,7 +858,7 @@ function nextStep() {
             duelLoser = duelPlayers.find(p => p !== winner);
             players = [winner];
             updateSurvivors();
-            renderCard("muerte", random(duelDeaths).replace("{A}", winner).replace("{B}", duelLoser));
+            renderCard("muerte", getDuelDeath().replace("{A}", winner).replace("{B}", duelLoser));
             return;
         }
 
@@ -829,21 +885,19 @@ function nextStep() {
 
     if (type === "muerte") {
         dead = random(players);
-        text = random(events.muerte).replace("{A}", dead);
+        text = getEvent("muerte").replace("{A}", dead);
     }
     if (type === "solo") {
-        text = random(events.solo).replace("{A}", random(players));
+        text = getEvent("solo").replace("{A}", random(players));
     }
     if (type === "mundo") {
-        text = random(events.mundo);
+        text = getEvent("mundo");
     }
     if (type === "asesinato") {
     const A = random(players);
     const B = random(players.filter(p => p !== A));
     dead = B;
-    text = random(events.asesinato)
-        .replace("{A}", A)
-        .replace("{B}", B);
+    text = getEvent("asesinato").replace("{A}", A).replace("{B}", B);
     }
 
     if (dead) {
