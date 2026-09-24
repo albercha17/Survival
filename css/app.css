@@ -342,6 +342,18 @@ button { -webkit-tap-highlight-color: transparent; }
 .pace-card .field-label { margin-top: 0; }
 .chip-item { border-color: var(--gold); color: var(--gold); }
 .chip-baby { border-color: #c8a2ff; color: #c8a2ff; }
+.chip-trait { border-color: #7fb4d9; color: #7fb4d9; font-style: italic; }
+.chip-team { font-weight: 700; }
+.roster-edition { margin: 4px 0 10px; font-size: .78rem; color: var(--ink-dim); }
+.roster-edition b { color: var(--gold); }
+.stepper { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.stepper-label { flex: 1; font-size: .85rem; color: var(--ink-dim); }
+.step { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--ink); font-size: 1.2rem; cursor: pointer; }
+.step:disabled { opacity: .35; cursor: default; }
+.step-val { min-width: 2ch; text-align: center; font-family: 'Cinzel', serif; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.victory-team { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0 0 14px; }
+.vt-member { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .8rem; color: var(--ink); }
+.vt-member .avatar { border: 3px solid var(--tc); box-shadow: 0 0 22px -6px var(--tc); }
 .log-entry.type-family { border-left-color: #c8a2ff; }
 .log-tag.type-family { color: #c8a2ff; }
 .victory-family { margin: -6px 0 12px; color: #c8a2ff; font-size: .95rem; }

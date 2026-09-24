@@ -297,13 +297,50 @@
     if(m.length === 2){
       if(m[0].baby || m[1].baby) return 'family';
       if(m[0].loverId === m[1].id) return 'lover';
-      if(m[0].allies.indexOf(m[1].id) !== -1) return 'ally';
+      if(sameTeam(m[0], m[1]) || m[0].allies.indexOf(m[1].id) !== -1) return 'ally';
       return 'stranger';
     }
     return 'group';
   }
 
   function fighters(game){ return game.tributes.filter(function(t){ return t.alive && !t.baby; }); }
+  function teamMode(game){ return !!(game && (game.mode === 'equipos' || game.mode === 'parejas') && game.teams && game.teams.length); }
+  function sameTeam(a, b){ return !!(a && b && a.team && a.team === b.team); }
+  function teamById(game, id){
+    if(!game || !game.teams) return null;
+    for(var i = 0; i < game.teams.length; i++) if(game.teams[i].id === id) return game.teams[i];
+    return null;
+  }
+  function teamLabel(team, lower){
+    if(!team) return '';
+    var art = lower ? team.art : team.art.charAt(0).toUpperCase() + team.art.slice(1);
+    return art + ' ' + team.mascot;
+  }
+  function teamsAlive(list){
+    var set = {};
+    list.forEach(function(t){ if(t.team) set[t.team] = true; });
+    return Object.keys(set).length;
+  }
+  function teamAliveCount(game, teamId){
+    return game.tributes.filter(function(t){ return t.alive && !t.baby && t.team === teamId; }).length;
+  }
+  function edMod(type){
+    var mods = curGame && curGame.emods;
+    return mods && mods[type] ? mods[type] : 1;
+  }
+  function jit(k){
+    if(!curGame) return 1;
+    var j = curGame.jit || (curGame.jit = {});
+    if(!(k in j)) j[k] = Math.round((0.35 + Math.random() * 1.6) * 100) / 100;
+    return j[k];
+  }
+  function traitOf(t){ return t && t.trait && A.TRAITS ? A.TRAITS[t.trait] : null; }
+  function traitMult(m, type){
+    var sum = 0;
+    m.forEach(function(t){ var tr = traitOf(t); sum += tr && tr.mods && tr.mods[type] ? tr.mods[type] : 1; });
+    return sum / m.length;
+  }
+  function roleMult(t, key){ var tr = traitOf(t); return tr && tr[key] ? tr[key] : 1; }
   function babyCount(game){
     return game.tributes.filter(function(t){ return t.baby; }).length +
       game.tributes.filter(function(t){ return t.preg; }).length;
@@ -319,7 +356,7 @@
       name: babyName(a, b), gender: choice(['chico', 'chica']),
       hair: choice([a, b]).hair, eyes: choice([a, b]).eyes, skin: choice([a, b]).skin || 'claro', photo: null,
       alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null,
-      baby: true, parents: [a.id, b.id], born: curGame.round, preg: null
+      baby: true, parents: [a.id, b.id], born: curGame.round, preg: null, team: a.team || null, teamColor: a.teamColor || null
     };
     curGame.tributes.push(baby);
     return baby;
@@ -353,9 +390,26 @@
   function validOrders(e, m){
     return permutations(m).filter(function(o){
       if(e.req && (!matchSpec(o[0], e.req.a) || (o[1] && !matchSpec(o[1], e.req.b)) || (o[2] && !matchSpec(o[2], e.req.c)))) return false;
+      if(e.team === 'mates' && !o.every(function(t){ return sameTeam(t, o[0]); })) return false;
+      if(e.team === 'rivals'){
+        if(o.length === 2 && sameTeam(o[0], o[1])) return false;
+        if(o.length === 3 && (!sameTeam(o[0], o[1]) || sameTeam(o[0], o[2]))) return false;
+      }
+      if(/(^|\+)defect(\+|$)/.test(e.fx || '') && (sameTeam(o[0], o[1]) || teamAliveCount(curGame, o[0].team) < 2)) return false;
       if(e.cond && !e.cond(o[0], o[1], o[2])) return false;
       return true;
     });
+  }
+  function orderWeight(e, o){
+    var L = lethalPart(e);
+    if(!L) return 1;
+    var victim = o[L[2] === 'a' ? 0 : L[2] === 'b' ? 1 : 2];
+    var w = roleMult(victim, 'victim');
+    if(L[1] === 'kill'){
+      var killer = L[4] ? o[L[4] === 'a' ? 0 : L[4] === 'b' ? 1 : 2] : o.filter(function(t){ return t !== victim; })[0];
+      if(killer) w *= roleMult(killer, 'killer');
+    }
+    return w;
   }
   function fxParts(e){ return (e.fx || 'none').split('+'); }
   function lethalPart(e){
@@ -371,6 +425,7 @@
     var rel = relOf(m);
     var free = m.every(isFree);
     var recent = curGame.recent || (curGame.recent = []);
+    var tm = teamMode(curGame);
     var cands = [];
     A.EVENTS.forEach(function(e){
       if(e.n !== m.length) return;
@@ -378,6 +433,9 @@
       if(e.free && !free) return;
       var hasBaby = m.some(function(t){ return t.baby; });
       if(hasBaby !== !!e.family) return;
+      if(e.team && !tm) return;
+      if(e.ffa && tm) return;
+      if(tm && /(^|\+)unally3?(\+|$)/.test(e.fx || '') && m.some(function(t, i){ return m.some(function(u, j){ return j > i && sameTeam(t, u); }); })) return;
       var lethal = !!lethalPart(e);
       if(wantDeath && !lethal) return;
       if(!wantDeath && lethal && !e.live) return;
@@ -385,7 +443,9 @@
       if(!ords.length) return;
       var w = e.w || 5;
       if(!wantDeath && lethal) w *= 0.45;
-      if(recent.indexOf(e.k) !== -1) w *= 0.1;
+      if(recent.indexOf(e.k) !== -1) w *= e.gen ? 0.5 : 0.1;
+      w *= edMod(e.type) * jit(e.k) * traitMult(m, e.type);
+      if(e.team && tm) w *= 1.4;
       if(/(^|\+)get$/.test(e.fx || '')) w *= 1.6;
       cands.push([w, { e: e, ords: ords, near: !wantDeath && lethal }]);
     });
@@ -395,10 +455,17 @@
     recent.push(e.k);
     if(recent.length > 14) recent.shift();
 
-    var o = choice(pick.ords);
+    var o = pick.ords.length > 1 ? weightedChoice(pick.ords.map(function(ord){ return [orderWeight(e, ord), ord]; })) : pick.ords[0];
     var a = o[0], b = o[1], c = o[2];
     var ok = true;
     var x = {};
+    if(tm){
+      x.ta = teamLabel(teamById(curGame, a.team), true);
+      if(b) x.tb = teamLabel(teamById(curGame, b.team), true);
+      if(c) x.tc = teamLabel(teamById(curGame, c.team), true);
+      var tA = teamById(curGame, a.team);
+      x.cry = tA ? tA.cry : '';
+    }
     var L = lethalPart(e);
     fxParts(e).forEach(function(fx){
       if(/^(kill|die)_/.test(fx)){
@@ -430,6 +497,12 @@
       else if(fx === 'breakupac'){ a.loverId = null; c.loverId = null; }
       else if(fx === 'steal3'){ x.item = A.ITEMS[a.item]; c.item = a.item; a.item = null; }
       else if(fx === 'stork'){ x.baby = createBaby(a, b); }
+      else if(fx === 'defect'){
+        x.tb = teamLabel(teamById(curGame, b.team), true);
+        curGame.tributes.forEach(function(t){ if(t !== a && t.team === a.team) removeAlly(a, t); });
+        a.team = b.team; a.teamColor = b.teamColor;
+        curGame.tributes.forEach(function(t){ if(t !== a && t.alive && !t.baby && t.team === a.team) addAlly(a, t); });
+      }
       else if(fx === 'get'){ x.item = A.ITEMS[e.it]; a.item = e.it; }
       else if(fx === 'steal'){ x.item = A.ITEMS[(o[e.n === 3 ? 2 : 1]).item]; var vic = o[e.n === 3 ? 2 : 1]; a.item = vic.item; vic.item = null; }
       else if(fx === 'give'){ x.item = A.ITEMS[a.item]; b.item = a.item; a.item = null; }
@@ -438,6 +511,10 @@
       else if(fx === 'use' || fx === 'lose'){ x.item = A.ITEMS[a.item]; a.item = null; }
     });
     var text = ok ? e.text(a, b, c, x) : (e.live ? e.live(a, b, c, x) : a.name + ' lo intenta, pero la arena decide darles un respiro.');
+    var trA = traitOf(a);
+    if(ok && trA && trA.mods && (trA.mods[e.type] || 1) > 1.2 && text.indexOf(a.name) === 0 && Math.random() < 0.3){
+      text = 'Fiel a su fama de ' + (a.gender === 'chica' ? trA.f : trA.m) + ', ' + text;
+    }
     var order = e.swap3 && o.length === 3 ? e.swap3.map(function(i){ return o[i]; }) :
       (e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o);
     if(x.baby) order = [order[0], x.baby, order[1]];
@@ -559,7 +636,7 @@
     return null;
   }
 
-  function pickGroup(game, alive, isFirst){
+  function pickGroup(game, alive, isFirst, wantDeath){
     var babies = game.tributes.filter(function(t){ return t.baby && t.alive; });
     if(babies.length && Math.random() < 0.2){
       var bb = choice(babies);
@@ -569,6 +646,22 @@
     }
     var a = choice(alive);
     var r = Math.random();
+    if(teamMode(game)){
+      var rivals = alive.filter(function(t){ return !sameTeam(t, a); });
+      var mates = alive.filter(function(t){ return t !== a && sameTeam(t, a); });
+      if(wantDeath && rivals.length && r < 0.82){
+        if(mates.length && Math.random() < 0.35) return [a, choice(mates), choice(rivals)];
+        return [a, choice(rivals)];
+      }
+      if(!wantDeath){
+        if(r < 0.3 && mates.length) return mates.length >= 2 && Math.random() < 0.35 ? [a].concat(shuffle(mates).slice(0, 2)) : [a, choice(mates)];
+        if(r < 0.62 && rivals.length){
+          if(mates.length && Math.random() < 0.25) return [a, choice(mates), choice(rivals)];
+          return [a, choice(rivals)];
+        }
+      }
+      r = Math.random();
+    }
     var lover = a.loverId ? byId(game, a.loverId) : null;
     if(lover && !lover.alive) lover = null;
     var allies = a.allies.map(function(id){ return byId(game, id); }).filter(function(x){ return x && x.alive; });
@@ -582,7 +675,7 @@
   }
 
   function makeTribute(c){
-    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null, baby: false, parents: null, preg: null };
+    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null, baby: false, parents: null, preg: null, team: null, teamColor: null, trait: null };
   }
 
   var PACE = { corta: 0.36, media: 0.22, larga: 0.15 };
@@ -593,6 +686,7 @@
     if(isFeast) p *= 1.4;
     p += Math.max(0, (game.calm || 0) - 5) * 0.05;
     if((game.streak || 0) >= 3) p *= 0.4;
+    p *= game.lethality || 1;
     return Math.min(0.8, p);
   }
 
@@ -608,25 +702,118 @@
     function(m, f){ return 'Una ardilla con bata blanca (o eso cree ' + m.name + ') da la noticia: vienen un bebé y muchas noches sin dormir.' + (f ? ' ' + f.name + ' pide un momento a solas.' : ''); }
   ];
 
+  var TEAM_COLORS = [['#e2493f', 'Rojo'], ['#4b7bff', 'Azul'], ['#4fae4a', 'Verde'], ['#e9b83a', 'Dorado'],
+                     ['#a35ee0', 'Violeta'], ['#f07d2a', 'Naranja'], ['#e25b9a', 'Rosa'], ['#2ab3b0', 'Turquesa']];
+  var MASCOTS = [['los', 'Zorros'], ['los', 'Patos Salvajes'], ['los', 'Tejones'], ['los', 'Mapaches'], ['las', 'Cabras Locas'],
+                 ['las', 'Ardillas Furiosas'], ['los', 'Lobos'], ['los', 'Pingüinos'], ['las', 'Llamas'], ['las', 'Gallinas Ninja'],
+                 ['los', 'Tiburones'], ['los', 'Osos Perezosos'], ['los', 'Caracoles Veloces'], ['las', 'Nutrias'], ['los', 'Búhos'],
+                 ['los', 'Camaleones'], ['los', 'Erizos'], ['las', 'Hienas Risueñas'], ['los', 'Castores'], ['las', 'Mofetas Elegantes']];
+  var CRIES = ['¡Por la patata!', '¡Nadie nos para!', '¡Hoy cenamos victoria!', '¡Ni un paso atrás, salvo si hay un oso!',
+               '¡Somos pocos, pero ruidosos!', '¡A por ellos, que son de papel!', '¡Más vale maña que fuerza!', '¡Que tiemble el bosque!',
+               '¡Juntos hasta la merienda!', '¡Nacimos para esto (creemos)!', '¡Ni un calcetín sin dueño!', '¡Olé, olé y olé!',
+               '¡El que se ría, pierde!', '¡Por nuestras madres!', '¡Uno para todos y todos a correr!', '¡Si no hay pan, hay galletas!'];
+
+  function makeTeams(game, mode, count){
+    var ts = game.tributes, n = ts.length, k;
+    if(mode === 'parejas') k = Math.floor(n / 2);
+    else k = Math.max(2, Math.min(parseInt(count, 10) || 2, Math.floor(n / 2), TEAM_COLORS.length));
+    k = Math.max(2, Math.min(k, TEAM_COLORS.length === 0 ? 2 : 999));
+    var colors = TEAM_COLORS.slice(0, Math.min(k, TEAM_COLORS.length));
+    while(colors.length < k) colors.push(TEAM_COLORS[colors.length % TEAM_COLORS.length]);
+    var masc = shuffle(MASCOTS), cries = shuffle(CRIES);
+    game.teams = colors.map(function(c, i){
+      return { id: 'T' + (i + 1), color: c[0], colorName: c[1], art: masc[i % masc.length][0], mascot: masc[i % masc.length][1], cry: cries[i % cries.length] };
+    });
+    shuffle(ts).forEach(function(t, i){
+      var team = game.teams[i % k];
+      t.team = team.id; t.teamColor = team.color;
+    });
+    ts.forEach(function(t){ ts.forEach(function(u){ if(t !== u && t.team === u.team) addAlly(t, u); }); });
+  }
+
   A.Engine = {
     label: function(type){ return CATEGORY_LABEL[type] || 'Crónica'; },
 
-    newGame: function(characters, pace){
-      var tributes = characters.map(makeTribute);
+    newGame: function(characters, opts){
+      if(typeof opts === 'string') opts = { pace: opts };
+      opts = opts || {};
+      var tributes = shuffle(characters.map(makeTribute));
       var loot = ['comida', 'comida', 'cuchillo', 'botiquin', 'paraguas', 'mapa', 'sarten', 'arco', 'pistola', 'ukelele'];
       tributes.forEach(function(t){ if(Math.random() < 0.4) t.item = choice(loot); });
-      return {
-        pace: pace || 'media',
+      if(A.TRAITS){
+        var ids = Object.keys(A.TRAITS);
+        tributes.forEach(function(t){ if(Math.random() < 0.85) t.trait = choice(ids); });
+      }
+      var mode = opts.mode === 'equipos' || opts.mode === 'parejas' ? opts.mode : 'todos';
+      if(tributes.length < 4) mode = 'todos';
+      var game = {
+        version: 3,
+        pace: opts.pace || 'media',
+        mode: mode,
         calm: 0,
         streak: 0,
         tributes: tributes,
         round: 0,
         log: [],
         winnerId: null,
+        winnerTeam: null,
         finished: false,
-        recent: []
+        recent: [],
+        jit: {},
+        teams: null,
+        edition: null,
+        emods: {},
+        lethality: 1
       };
+      if(A.EDITIONS && A.EDITIONS.length){
+        var ed = weightedChoice(A.EDITIONS.map(function(x){ return [x.w || 1, x]; }));
+        game.edition = { id: ed.id, name: ed.name, desc: ed.desc };
+        var mods = {};
+        if(ed.chaos){
+          ['death', 'fight', 'romance', 'alliance', 'theft', 'betrayal', 'item', 'neutral', 'heal', 'family'].forEach(function(k){
+            mods[k] = Math.round((0.35 + Math.random() * 2.3) * 100) / 100;
+          });
+        } else Object.keys(ed.mods || {}).forEach(function(k){ mods[k] = ed.mods[k]; });
+        game.emods = mods;
+        game.lethality = ed.lethality || 1;
+      }
+      if(mode !== 'todos') makeTeams(game, mode, opts.teams);
+      return game;
     },
+
+    introEntries: function(game){
+      var list = [];
+      var n = game.tributes.length;
+      var ed = game.edition ? ' Edición de hoy: «' + game.edition.name + '». ' + game.edition.desc : '';
+      if(teamMode(game)){
+        var how = game.mode === 'parejas' ? 'por parejas' : 'por equipos';
+        list.push({
+          type: 'announcement', scene: 'lineup', round: 0, deaths: [],
+          text: 'Bienvenidos a La Arena. Hoy se juega ' + how + ': ' + game.teams.length + ' equipos entran en la arena y solo uno saldrá con vida.' + ed,
+          ids: game.tributes.map(function(t){ return t.id; })
+        });
+        game.teams.forEach(function(team){
+          var members = game.tributes.filter(function(t){ return t.team === team.id; });
+          list.push({
+            type: 'announcement', scene: 'teamintro', round: 0, deaths: [], teamId: team.id, teamName: teamLabel(team), teamColor: team.color,
+            text: teamLabel(team) + ' (' + team.colorName.toLowerCase() + '): ' + joinNames(members.map(function(t){ return t.name; })) + '. Su grito de guerra: «' + team.cry + '»',
+            ids: members.map(function(t){ return t.id; })
+          });
+        });
+      } else {
+        var who = n <= 10 ? joinNames(game.tributes.map(function(t){ return t.name; })) + ' entran' : n + ' tributos entran';
+        list.push({
+          type: 'announcement', scene: 'lineup', round: 0, deaths: [],
+          text: 'Bienvenidos a La Arena. ' + who + ' en la arena. Solo una persona saldrá con vida.' + ed,
+          ids: game.tributes.map(function(t){ return t.id; })
+        });
+      }
+      return list;
+    },
+
+    teamLabel: function(game, teamId, lower){ return teamLabel(teamById(game, teamId), lower); },
+    teamOf: function(game, teamId){ return teamById(game, teamId); },
+    isTeamMode: function(game){ return teamMode(game); },
 
     introEntry: function(game){
       var n = game.tributes.length;
@@ -664,7 +851,7 @@
         var dad2 = byId(game, mom2.preg.by);
         var withDad2 = dad2 && dad2.alive && !dad2.baby;
         entry = ev('family', choice(REVEAL)(mom2, withDad2 ? dad2 : null), withDad2 ? [mom2, dad2] : [mom2], 'pregnant');
-      } else if(alive.length === 2){
+      } else if(alive.length === 2 && !sameTeam(alive[0], alive[1])){
         var pair = shuffle(alive);
         var dom = pickDominant(pair[0], pair[1]);
         safeKill(dom[1], 'final_duel', round);
@@ -673,7 +860,7 @@
       } else {
         var ctx = { round: round, dm: deathMultiplier(alive.length, isFirst, isFeast) };
         var wantDeath = Math.random() < deathChance(game, alive.length, isFirst, isFeast);
-        entry = resolveGroup(pickGroup(game, alive, isFirst), ctx, wantDeath);
+        entry = resolveGroup(pickGroup(game, alive, isFirst, wantDeath), ctx, wantDeath);
       }
       game.calm = currentDeaths.length ? 0 : (game.calm || 0) + 1;
       game.streak = currentDeaths.length ? (game.streak || 0) + 1 : 0;
@@ -684,7 +871,17 @@
 
       var entries = [entry];
       var left = fighters(game);
-      if(left.length <= 1){
+      if(teamMode(game) && left.length >= 1 && teamsAlive(left) <= 1){
+        game.finished = true;
+        var wteam = teamById(game, left[0].team);
+        game.winnerTeam = wteam ? wteam.id : null;
+        var best = left.slice().sort(function(p, q){ return q.kills - p.kills; })[0];
+        game.winnerId = best.id;
+        var kidsT = game.tributes.filter(function(t){ return t.baby && t.alive && t.team === left[0].team; });
+        var vtext = '¡Victoria para ' + teamLabel(wteam, true) + '! ' + joinNames(left.map(function(t){ return t.name; })) + (left.length === 1 ? ' sale con vida de la arena y lo celebra' : ' salen con vida de la arena y lo celebran') + ' con su grito de guerra: «' + (wteam ? wteam.cry : '') + '»';
+        if(kidsT.length) vtext += ' Con ' + (kidsT.length === 1 ? 'su bebé, ' + kidsT[0].name : 'sus bebés') + ' en brazos.';
+        entries.push({ type: 'victory', scene: 'teamvictory', round: round, deaths: [], teamId: game.winnerTeam, teamName: teamLabel(wteam), teamColor: wteam ? wteam.color : null, ids: left.map(function(t){ return t.id; }).concat(kidsT.map(function(t){ return t.id; })), text: vtext });
+      } else if(left.length <= 1){
         game.finished = true;
         game.winnerId = left[0] ? left[0].id : null;
         if(left[0]){
