@@ -873,6 +873,9 @@
       var S = new Stage(el, entry, actors, isStatic);
       S.build();
       SC[key](S, { entry: entry, prop: entry.prop, prop2: entry.prop2 });
+      if(S.hasDeath && key !== 'balloon' && !S.scene.querySelector('.ghostf')){
+        S.dead.forEach(function(d, i){ if(d) dieBy(S, i, 'fall', 2400, S.X[i] > S.W / 2 ? 1 : -1); });
+      }
       if(isStatic) S.finish();
     }
   };

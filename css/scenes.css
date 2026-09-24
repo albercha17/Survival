@@ -171,3 +171,10 @@
 .scene .water.deep { height: 58px; bottom: 0; }
 .scene .ufobeam { position: absolute; bottom: 20px; width: 90px; height: 150px; opacity: 0; transform-origin: 50% 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(160,255,190,.75), rgba(160,255,190,.15)); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); }
+
+/* escenas nuevas (tanda 5) */
+.scene .sandpit { position: absolute; bottom: 8px; width: 140px; height: 34px; border-radius: 50%; transform: scaleX(0);
+  background: radial-gradient(ellipse at 50% 40%, #c9a260 0 40%, #a88046 60%, #7a5a2e 100%); }
+.scene .laser { position: absolute; left: -10%; width: 120%; height: 3px; background: #ff2d4a; box-shadow: 0 0 8px 2px rgba(255,45,74,.7); opacity: 0; pointer-events: none; }
+.scene .bigwave.small { height: 70px; }
+.scene .kiteline { position: absolute; bottom: 110px; width: 2px; height: 70px; background: rgba(255,255,255,.7); transform: rotate(30deg); transform-origin: 50% 100%; pointer-events: none; }
