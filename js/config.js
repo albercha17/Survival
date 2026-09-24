@@ -1,7 +1,12 @@
-// Pega aquí los datos de tu proyecto de Supabase (Project Settings → API).
-// La clave "anon" es pública por diseño: la seguridad la da el RLS de supabase/schema.sql.
-// Si los dejas vacíos, la app funciona en modo local (datos solo en este dispositivo).
+// Pega aquí la configuración web de tu proyecto de Firebase
+// (Project settings → Tus apps → Web → firebaseConfig).
+// Estos valores son públicos por diseño: la seguridad la dan las reglas de firebase/firestore.rules.
+// Si dejas FIREBASE vacío, la app funciona en modo local (datos solo en este dispositivo).
 window.ARENA_CONFIG = {
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: ''
+  FIREBASE: {
+    // apiKey: '',
+    // authDomain: '',
+    // projectId: '',
+    // appId: ''
+  }
 };
