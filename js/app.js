@@ -432,16 +432,8 @@
     $('alive-pill').textContent = (g.tributes.length - dead) + ' de ' + g.tributes.length + ' vivos';
   }
 
-  function renderStage(entry, revealDeaths){
-    var ids = entry.ids || [];
-    var size = ids.length <= 3 ? 72 : ids.length <= 8 ? 48 : 34;
-    var shown = ids.slice(0, 16);
-    $('stage-avatars').innerHTML = shown.map(function(id){
-      var t = byId(id);
-      if(!t) return '';
-      var fell = revealDeaths && (entry.deaths || []).indexOf(id) !== -1;
-      return A.avatar(t, size).replace('class="avatar"', 'class="avatar' + (fell ? ' fallen' : '') + '"');
-    }).join('');
+  function renderStage(entry, isStatic){
+    A.Scenes.render($('stage-avatars'), entry, byId, isStatic);
     $('stage-day').textContent = entry.round === 0 ? 'Apertura' : 'Día ' + entry.round;
     var tag = $('stage-tag');
     tag.className = 'log-tag type-' + entry.type;
@@ -504,7 +496,6 @@
     saved.game.log.push(entry);
     persist();
     updateHeader();
-    renderStage(entry, true);
     addHistory(entry);
     current = null;
   }

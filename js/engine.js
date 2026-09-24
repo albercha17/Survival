@@ -280,8 +280,67 @@
     if(isFeast) m *= 1.5;
     return m;
   }
-  function ev(type, text, members){
-    return { type: type, text: text, ids: members.map(function(t){ return t.id; }) };
+  function ev(type, text, members, scene, prop){
+    return { type: type, text: text, ids: members.map(function(t){ return t.id; }), scene: scene, prop: prop };
+  }
+
+  var curGame = null;
+
+  function isFree(t){
+    if(!t.loverId) return true;
+    var l = byId(curGame, t.loverId);
+    return !l || !l.alive;
+  }
+  function relOf(m){
+    if(m.length === 2){
+      if(m[0].loverId === m[1].id) return 'lover';
+      if(m[0].allies.indexOf(m[1].id) !== -1) return 'ally';
+      return 'stranger';
+    }
+    return 'group';
+  }
+
+  function catalogEvent(m, ctx){
+    var rel = relOf(m);
+    var free = m.every(isFree);
+    var recent = curGame.recent || (curGame.recent = []);
+    var list = A.EVENTS.filter(function(e){
+      return e.n === m.length && (e.rel === 'any' || e.rel === rel) && (!e.free || free);
+    });
+    if(!list.length) return null;
+    var pairs = list.map(function(e){
+      var w = e.w || 5;
+      if(/^(kill|die)_/.test(e.fx || '')) w *= ctx.dm;
+      if(recent.indexOf(e.k) !== -1) w *= 0.12;
+      return [w, e];
+    });
+    var e = weightedChoice(pairs);
+    recent.push(e.k);
+    if(recent.length > 10) recent.shift();
+
+    var o = m.length > 1 ? shuffle(m) : m.slice();
+    var a = o[0], b = o[1], c = o[2];
+    var fx = e.fx || 'none';
+    var ok = true;
+    var lethal = /^(kill|die)_([abc])(_unally)?$/.exec(fx);
+    if(lethal){
+      var victim = o[lethal[2] === 'a' ? 0 : lethal[2] === 'b' ? 1 : 2];
+      if(lethal[3]) removeAlly(a, b);
+      ok = safeKill(victim, e.k, ctx.round);
+      if(ok && lethal[1] === 'kill'){
+        var killer = o.filter(function(t){ return t !== victim; })[0];
+        killer.kills += 1;
+      }
+    } else if(fx === 'love') setLovers(a, b);
+    else if(fx === 'breakup'){ a.loverId = null; b.loverId = null; }
+    else if(fx === 'ally') addAlly(a, b);
+    else if(fx === 'ally3'){ addAlly(a, b); addAlly(b, c); addAlly(a, c); }
+    else if(fx === 'unally') removeAlly(a, b);
+    else if(fx === 'unally3'){ removeAlly(a, b); removeAlly(b, c); removeAlly(a, c); }
+
+    var text = ok ? e.text(a, b, c) : (e.live ? e.live(a, b, c) : a.name + ' lo intenta, pero la arena decide darles un respiro.');
+    var scene = e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o;
+    return ev(ok ? e.type : 'fight', text, scene, e.scene, e.prop);
   }
 
   function resolveSolo(t, ctx){
@@ -291,57 +350,58 @@
       [12 * dm, 'death_accident'], [8 * dm, 'death_illness']
     ]);
     if(cat === 'death_accident' || cat === 'death_illness'){
-      if(safeKill(t, cat, ctx.round)) return ev('death', choice(TPL[cat])(t), [t]);
-      return ev('neutral', choice(TPL.injured)(t), [t]);
+      if(safeKill(t, cat, ctx.round)) return ev('death', choice(TPL[cat])(t), [t], 'ghost');
+      return ev('neutral', choice(TPL.injured)(t), [t], 'injured');
     }
-    return ev(cat === 'find_item' ? 'item' : 'neutral', choice(TPL[cat])(t), [t]);
+    var soloScene = { explore: 'explore', find_item: 'item', hide: 'hide', injured: 'injured' }[cat];
+    return ev(cat === 'find_item' ? 'item' : 'neutral', choice(TPL[cat])(t), [t], soloScene, cat === 'find_item' ? 'crate' : undefined);
   }
 
   function resolveStrangers(a, b, ctx){
     var cat = weightedChoice([[26, 'meet_alliance'], [12, 'meet_romance'], [28 * ctx.dm, 'fight'], [34, 'ignore']]);
-    if(cat === 'meet_alliance'){ addAlly(a, b); return ev('alliance', choice(TPL.meet_alliance)(a, b), [a, b]); }
-    if(cat === 'meet_romance'){ setLovers(a, b); return ev('romance', choice(TPL.meet_romance)(a, b), [a, b]); }
-    if(cat === 'ignore') return ev('neutral', choice(TPL.ignore)(a, b), [a, b]);
+    if(cat === 'meet_alliance'){ addAlly(a, b); return ev('alliance', choice(TPL.meet_alliance)(a, b), [a, b], 'handshake'); }
+    if(cat === 'meet_romance'){ setLovers(a, b); return ev('romance', choice(TPL.meet_romance)(a, b), [a, b], 'love'); }
+    if(cat === 'ignore') return ev('neutral', choice(TPL.ignore)(a, b), [a, b], 'awkward');
     if(Math.random() < 0.6){
       var pair = pickDominant(a, b);
       if(safeKill(pair[1], 'fight', ctx.round)){
         pair[0].kills += 1;
-        return ev('death', choice(TPL.fight_death)(pair[0], pair[1]), [a, b]);
+        return ev('death', choice(TPL.fight_death)(pair[0], pair[1]), pair, choice(['brawl', 'shoot']));
       }
     }
-    return ev('fight', choice(TPL.fight_survive)(a, b), [a, b]);
+    return ev('fight', choice(TPL.fight_survive)(a, b), [a, b], 'brawl');
   }
 
   function resolveAllies(a, b, ctx){
     var cat = weightedChoice([[30, 'ally_bond'], [22, 'ally_success'], [16 * ctx.dm, 'betrayal'], [10, 'become_lovers'], [14, 'ally_split']]);
-    if(cat === 'ally_bond') return ev('alliance', choice(TPL.ally_bond)(a, b), [a, b]);
-    if(cat === 'ally_success') return ev('alliance', choice(TPL.ally_success)(a, b), [a, b]);
-    if(cat === 'become_lovers'){ setLovers(a, b); return ev('romance', choice(TPL.become_lovers)(a, b), [a, b]); }
-    if(cat === 'ally_split'){ removeAlly(a, b); return ev('alliance', choice(TPL.ally_split)(a, b), [a, b]); }
+    if(cat === 'ally_bond') return ev('alliance', choice(TPL.ally_bond)(a, b), [a, b], 'handshake');
+    if(cat === 'ally_success') return ev('alliance', choice(TPL.ally_success)(a, b), [a, b], 'handshake');
+    if(cat === 'become_lovers'){ setLovers(a, b); return ev('romance', choice(TPL.become_lovers)(a, b), [a, b], 'love'); }
+    if(cat === 'ally_split'){ removeAlly(a, b); return ev('alliance', choice(TPL.ally_split)(a, b), [a, b], 'split'); }
     var pair = pickDominant(a, b);
     removeAlly(a, b);
     if(safeKill(pair[1], 'betrayal', ctx.round)){
       pair[0].kills += 1;
-      return ev('death', choice(TPL.betrayal)(pair[0], pair[1]), [a, b]);
+      return ev('death', choice(TPL.betrayal)(pair[0], pair[1]), pair, choice(['stab', 'shoot']));
     }
-    return ev('fight', choice(TPL.betrayal_failed_fallback)(a, b), [a, b]);
+    return ev('fight', choice(TPL.betrayal_failed_fallback)(pair[0], pair[1]), pair, 'stab');
   }
 
   function resolveLovers(a, b, ctx){
     var cat = weightedChoice([[40, 'romance_moment'], [16 * ctx.dm, 'romance_protect'], [8 * ctx.dm, 'jealousy_betrayal'], [36, 'romance_success']]);
-    if(cat === 'romance_moment') return ev('romance', choice(TPL.romance_moment)(a, b), [a, b]);
-    if(cat === 'romance_success') return ev('romance', choice(TPL.romance_success)(a, b), [a, b]);
+    if(cat === 'romance_moment') return ev('romance', choice(TPL.romance_moment)(a, b), [a, b], 'love');
+    if(cat === 'romance_success') return ev('romance', choice(TPL.romance_success)(a, b), [a, b], 'love');
     if(cat === 'romance_protect'){
       var pp = Math.random() < 0.5 ? [a, b] : [b, a];
-      if(safeKill(pp[0], 'romance_protect', ctx.round)) return ev('death', choice(TPL.romance_protect)(pp[0], pp[1]), [a, b]);
-      return ev('romance', choice(TPL.romance_protect_fallback)(a, b), [a, b]);
+      if(safeKill(pp[0], 'romance_protect', ctx.round)) return ev('death', choice(TPL.romance_protect)(pp[0], pp[1]), pp, 'mourn');
+      return ev('romance', choice(TPL.romance_protect_fallback)(a, b), [a, b], 'love');
     }
     var jp = pickDominant(a, b);
     if(safeKill(jp[1], 'jealousy', ctx.round)){
       jp[0].kills += 1;
-      return ev('death', choice(TPL.jealousy_betrayal)(jp[0], jp[1]), [a, b]);
+      return ev('death', choice(TPL.jealousy_betrayal)(jp[0], jp[1]), jp, 'shoot');
     }
-    return ev('fight', choice(TPL.jealousy_fallback)(a, b), [a, b]);
+    return ev('fight', choice(TPL.jealousy_fallback)(jp[0], jp[1]), jp, 'brawl');
   }
 
   function resolveDuo(a, b, ctx){
@@ -355,13 +415,13 @@
     var all = [a, b, c];
     if(cat === 'group_alliance'){
       addAlly(a, b); addAlly(b, c); addAlly(a, c);
-      return ev('alliance', choice(TPL.group_alliance)(a, b, c), all);
+      return ev('alliance', choice(TPL.group_alliance)(a, b, c), all, 'handshake');
     }
-    if(cat === 'group_success') return ev('neutral', choice(TPL.group_success)(a, b, c), all);
-    if(cat === 'group_none') return ev('neutral', choice(TPL.group_none)(a, b, c), all);
+    if(cat === 'group_success') return ev('neutral', choice(TPL.group_success)(a, b, c), all, 'feast');
+    if(cat === 'group_none') return ev('neutral', choice(TPL.group_none)(a, b, c), all, 'dance');
     if(cat === 'group_split'){
       removeAlly(a, b); removeAlly(b, c); removeAlly(a, c);
-      return ev('alliance', choice(TPL.group_split)(a, b, c), all);
+      return ev('alliance', choice(TPL.group_split)(a, b, c), all, 'split');
     }
     var vi = rand(3);
     var victim = all[vi];
@@ -372,15 +432,19 @@
       var ally = first ? survivors[1] : survivors[0];
       if(safeKill(victim, 'ambush', ctx.round)){
         killer.kills += 1;
-        return ev('death', choice(TPL.group_ambush_internal)(killer, ally, victim), all);
+        return ev('death', choice(TPL.group_ambush_internal)(killer, ally, victim), [killer, ally, victim], 'shoot');
       }
     } else if(safeKill(victim, 'ambush', ctx.round)){
-      return ev('death', choice(TPL.group_ambush_external)(survivors[0], survivors[1], victim), all);
+      return ev('death', choice(TPL.group_ambush_external)(survivors[0], survivors[1], victim), [survivors[0], survivors[1], victim], 'lightning');
     }
-    return ev('fight', choice(TPL.ambush_escape_fallback)(a, b, c), all);
+    return ev('fight', choice(TPL.ambush_escape_fallback)(a, b, c), all, 'brawl');
   }
 
   function resolveGroup(m, ctx){
+    if(A.EVENTS && Math.random() < (m.length === 1 ? 0.75 : 0.7)){
+      var custom = catalogEvent(m, ctx);
+      if(custom) return custom;
+    }
     if(m.length === 1) return resolveSolo(m[0], ctx);
     if(m.length === 2) return resolveDuo(m[0], m[1], ctx);
     return resolveTrio(m[0], m[1], m[2], ctx);
@@ -419,7 +483,8 @@
         round: 0,
         log: [],
         winnerId: null,
-        finished: false
+        finished: false,
+        recent: []
       };
     },
 
@@ -427,7 +492,7 @@
       var n = game.tributes.length;
       var who = n <= 10 ? joinNames(game.tributes.map(function(t){ return t.name; })) + ' entran' : n + ' tributos entran';
       return {
-        type: 'announcement', round: 0, deaths: [],
+        type: 'announcement', scene: 'lineup', round: 0, deaths: [],
         text: 'Bienvenidos a La Arena. ' + who + ' en la arena. Solo una persona saldrá con vida.',
         ids: game.tributes.map(function(t){ return t.id; })
       };
@@ -442,6 +507,7 @@
       var isFeast = !isFirst && alive.length > 4 && round % 6 === 0;
       remainingAlive = alive.length;
       currentDeaths = [];
+      curGame = game;
 
       var entry;
       if(alive.length === 2){
@@ -449,7 +515,7 @@
         var dom = pickDominant(pair[0], pair[1]);
         safeKill(dom[1], 'final_duel', round);
         dom[0].kills += 1;
-        entry = ev('death', choice(TPL.final_duel)(dom[0], dom[1]), pair);
+        entry = ev('death', choice(TPL.final_duel)(dom[0], dom[1]), dom, choice(['shoot', 'brawl', 'stab']));
       } else {
         var ctx = { round: round, dm: deathMultiplier(alive.length, isFirst, isFeast) };
         for(var attempt = 0; attempt < 3; attempt++){
@@ -469,7 +535,7 @@
         game.finished = true;
         game.winnerId = left[0] ? left[0].id : null;
         if(left[0]){
-          entries.push({ type: 'victory', round: round, deaths: [], ids: [left[0].id], text: choice(TPL.victory)(left[0]) });
+          entries.push({ type: 'victory', scene: 'victory', round: round, deaths: [], ids: [left[0].id], text: choice(TPL.victory)(left[0]) });
         }
       }
       return entries;
