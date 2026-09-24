@@ -23,10 +23,12 @@ La clave `anon` es pública por diseño: nadie puede leer ni tocar datos ajenos 
 
 ```
 index.html        pantallas y hojas (reparto, narrador, victoria, editor, cuenta)
-css/              estilos
+css/              estilos (scenes.css: animaciones de las escenas)
 js/avatar.js      avatares SVG y paletas de pelo/ojos
 js/data.js        capa de datos (Supabase o localStorage)
+js/events.js      catálogo de eventos absurdos (muertes tontas, amoríos, traiciones)
 js/engine.js      motor de simulación: un evento por día
+js/scenes.js      escenas animadas que dibujan cada evento con los avatares
 js/narrator.js    texto que se escribe solo y voz
 js/app.js         interfaz y flujo del juego
 supabase/         esquema SQL

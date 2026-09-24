@@ -1,0 +1,414 @@
+/* ---------- Base de escena ---------- */
+.scene {
+  --sz: 84px; --dd: 1.4s; --gd: 2s; --wd: 1.2s;
+  position: relative;
+  height: 214px;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--sA, #2d3b2f), var(--sB, #10160f));
+}
+.scene .sc-ground {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 40px; z-index: 1;
+  background: linear-gradient(180deg, rgba(0,0,0,.2), rgba(0,0,0,.5));
+}
+.actor {
+  position: absolute; z-index: 3;
+  bottom: 26px;
+  left: calc(var(--x) - var(--sz) / 2);
+  width: var(--sz); height: var(--sz);
+}
+.actor .ai { position: relative; width: 100%; height: 100%; transform-origin: 50% 100%; }
+.actor .avatar { display: block; width: 100%; height: 100%; border: 2px solid rgba(255,255,255,.16); box-sizing: border-box; }
+.actor .who {
+  position: absolute; left: 50%; top: 100%; margin-top: 3px; transform: translateX(-50%);
+  max-width: 110px; padding: 1px 8px; border-radius: 999px;
+  font-size: .66rem; line-height: 1.35; color: #fff; background: rgba(0,0,0,.5);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.xeyes { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.actor.dies .xeyes { animation: showx .05s var(--dd) forwards; }
+.actor.dies .ai { animation: dieGeneric 1s var(--dd) forwards; }
+@keyframes dieGeneric { to { transform: rotate(-16deg) translateY(12px); filter: grayscale(1) brightness(.6); } }
+@keyframes showx { to { opacity: 1; } }
+
+.pr { position: absolute; z-index: 4; pointer-events: none; }
+.pr svg { display: block; width: 100%; height: 100%; }
+
+.sc-word {
+  position: absolute; left: 50%; top: 12px; z-index: 9; pointer-events: none;
+  transform: translateX(-50%) scale(0);
+  font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.7rem; letter-spacing: .04em; white-space: nowrap;
+  color: #fff; -webkit-text-stroke: 1px #000;
+  text-shadow: 0 3px 0 #000, 0 0 14px rgba(255,190,60,.8);
+  animation: popword .9s var(--wd) forwards;
+}
+@keyframes popword {
+  0% { transform: translateX(-50%) scale(0) rotate(-8deg); opacity: 1; }
+  30% { transform: translateX(-50%) scale(1.25) rotate(4deg); }
+  65% { transform: translateX(-50%) scale(1) rotate(-3deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 0; }
+}
+
+.ghostfloat {
+  position: absolute; z-index: 6; bottom: 96px; left: calc(var(--x) - 20px);
+  width: 40px; height: 48px; opacity: 0; pointer-events: none;
+  animation: ghostup 2.6s var(--gd) ease-out forwards;
+}
+.ghostfloat svg { display: block; width: 100%; height: 100%; }
+@keyframes ghostup {
+  0% { opacity: 0; transform: translateY(26px); }
+  25% { opacity: .95; }
+  100% { opacity: .85; transform: translateY(-40px); }
+}
+
+/* tamaños de props */
+.pr-heart { width: 22px; height: 22px; }
+.pr-gun { width: 48px; height: 30px; }
+.pr-flash { width: 38px; height: 38px; }
+.pr-bullet { width: 22px; height: 9px; }
+.pr-knife { width: 16px; height: 48px; }
+.pr-anvil { --pw: 64px; width: 64px; height: 46px; }
+.pr-piano { --pw: 84px; width: 84px; height: 62px; }
+.pr-meteor { --pw: 62px; width: 62px; height: 62px; }
+.pr-rock { --pw: 60px; width: 60px; height: 46px; }
+.pr-bomb { --pw: 54px; width: 54px; height: 58px; }
+.pr-banana { width: 36px; height: 24px; }
+.pr-bolt { width: 44px; height: 130px; }
+.pr-mushroom { width: 34px; height: 34px; }
+.pr-bottle { width: 22px; height: 40px; }
+.pr-bear { width: 66px; height: 66px; }
+.pr-duck { width: 62px; height: 58px; }
+.pr-star { width: 16px; height: 16px; }
+.pr-crown { width: 56px; height: 38px; }
+.pr-ring { width: 30px; height: 30px; }
+.pr-dust { width: 90px; height: 90px; }
+.pr-tear { width: 8px; height: 12px; }
+
+@keyframes pulse { 50% { transform: scale(1.25); } }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes dodge { 40% { transform: translateY(-30px); } }
+@keyframes kod { to { transform: translate(10px, -34px) rotate(80deg); filter: grayscale(1) brightness(.55); } }
+@keyframes tearfall { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px); } }
+
+/* ---------- Amor ---------- */
+.sc-love, .sc-wedding { --sA: #4b2342; --sB: #170d19; }
+.sc-wedding { --sA: #5a4a1e; --sB: #1a1407; }
+.sc-love .a-0, .sc-wedding .a-0 { animation: loveL 1.4s ease-out forwards; }
+.sc-love .a-1, .sc-wedding .a-1 { animation: loveR 1.4s ease-out forwards; }
+.sc-love.n3 .a-2 { animation: bob .9s ease-in-out infinite alternate; }
+@keyframes loveL { to { transform: translateX(24px) rotate(7deg); } }
+@keyframes loveR { to { transform: translateX(-24px) rotate(-7deg); } }
+.heart-f { bottom: 100px; opacity: 0; animation: heartup 2.4s var(--hd) infinite; }
+@keyframes heartup {
+  0% { transform: translateY(0) scale(.4); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-120px) scale(var(--hs, 1)); opacity: 0; }
+}
+.big-heart { left: 50%; bottom: 108px; width: 44px; height: 44px; margin-left: -22px; animation: pulse .9s ease-in-out infinite; }
+.ring-c { left: 50%; bottom: 158px; margin-left: -15px; animation: pulse 1.1s ease-in-out infinite; }
+.conf { position: absolute; top: -12px; z-index: 6; width: 7px; height: 11px; opacity: .95; animation: confall 2.6s var(--cd) linear infinite; }
+@keyframes confall { to { transform: translateY(250px) rotate(var(--cr)); } }
+
+/* ---------- Alianza ---------- */
+.sc-handshake { --sA: #1c4741; --sB: #0b1a18; }
+.sc-handshake .a-0 { animation: hsL 1s ease-out forwards; }
+.sc-handshake .a-1 { animation: hsR 1s ease-out forwards; }
+.sc-handshake.n3 .a-1 { animation: bob .8s ease-in-out infinite alternate; }
+.sc-handshake.n3 .a-2 { animation: hsR 1s ease-out forwards; }
+@keyframes hsL { to { transform: translateX(28px); } }
+@keyframes hsR { to { transform: translateX(-28px); } }
+.hs { left: 50%; bottom: 116px; width: 56px; height: 38px; margin-left: -28px; opacity: 0; animation: hsPop .5s .8s forwards, pulse 1s 1.3s ease-in-out infinite; }
+@keyframes hsPop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+.spark { margin-left: -8px; opacity: 0; animation: sparkout 1.2s calc(.9s + var(--sd)) infinite; }
+@keyframes sparkout {
+  0% { opacity: 0; transform: translate(0, 0) scale(.3); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+}
+
+/* ---------- Disparo ---------- */
+.sc-shoot { --sA: #4e1e19; --sB: #150a09; --dd: 1.25s; --gd: 1.9s; --wd: 1.05s; }
+.sc-shoot .a-0 { animation: recoil .25s .78s; }
+@keyframes recoil { 50% { transform: translateX(-8px); } }
+.sc-shoot .gun { right: -38px; top: 34px; animation: gunup .5s ease-out both; }
+@keyframes gunup { from { transform: rotate(40deg); opacity: 0; } to { transform: rotate(0); opacity: 1; } }
+.sc-shoot .flash { right: -64px; top: 20px; opacity: 0; animation: flashk .2s .78s forwards; }
+@keyframes flashk { 0% { opacity: 0; transform: scale(.3); } 40% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.4); } }
+.sc-shoot .bullet { bottom: 62px; left: calc(var(--bx1) + 46px); opacity: 0; animation: bulletk .3s .8s linear forwards; }
+@keyframes bulletk {
+  0% { opacity: 1; left: calc(var(--bx1) + 46px); }
+  90% { opacity: 1; }
+  100% { opacity: 0; left: calc(var(--bx2) - 34px); }
+}
+.sc-shoot .actor.dies .ai { animation: hitfall .9s 1.1s ease-in forwards; }
+@keyframes hitfall {
+  0% { transform: none; }
+  20% { transform: translateX(12px) rotate(10deg); }
+  100% { transform: translate(10px, -34px) rotate(82deg); filter: grayscale(1) brightness(.55); }
+}
+.sc-shoot .actor.lives:not(.a-0) .ai { animation: dodge .6s 1.05s; }
+
+/* ---------- Puñalada ---------- */
+.sc-stab { --sA: #161c38; --sB: #080a12; --dd: 1.95s; --gd: 2.6s; --wd: 1.7s; }
+.sc-stab .a-0 { animation: sneak 1.5s ease-in-out forwards; }
+@keyframes sneak { to { transform: translateX(70px); } }
+.sc-stab .knife { right: 2px; top: -40px; transform: rotate(18deg); transform-origin: 50% 100%; animation: knifedown .25s 1.7s forwards; }
+@keyframes knifedown { to { transform: translate(26px, 36px) rotate(110deg); } }
+.sc-stab .actor.dies .ai { animation: stabbed .9s 1.75s forwards; }
+@keyframes stabbed {
+  0% { transform: none; }
+  20% { transform: translateX(-10px) rotate(-8deg) scale(1.05); }
+  100% { transform: translate(10px, -34px) rotate(78deg); filter: grayscale(1) brightness(.55); }
+}
+.sc-stab .actor.lives:not(.a-0) .ai { animation: startle .5s 1.75s; }
+@keyframes startle { 40% { transform: translateY(-34px) scale(1.06); } }
+.noteh { bottom: 122px; width: 18px; height: 26px; opacity: 0; animation: notefloat 1.6s infinite; }
+@keyframes notefloat { 0% { opacity: 0; transform: translateY(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-30px); } }
+
+/* ---------- Pelea ---------- */
+.sc-brawl { --sA: #41301a; --sB: #140d07; --dd: 1.55s; --gd: 2.1s; --wd: 1.35s; }
+.sc-brawl .a-0 { animation: brawlL 1.5s ease-in forwards; }
+.sc-brawl.n2 .a-1 { animation: brawlR 1.5s ease-in forwards; }
+.sc-brawl.n3 .a-1 { animation: shake .25s linear infinite alternate; }
+.sc-brawl.n3 .a-2 { animation: brawlR 1.5s ease-in forwards; }
+@keyframes brawlL {
+  0% { transform: none; } 35% { transform: translateX(42px); } 45% { transform: translateX(36px) rotate(-6deg); }
+  55% { transform: translateX(44px) rotate(6deg); } 65% { transform: translateX(38px) rotate(-6deg); }
+  75% { transform: translateX(42px) rotate(6deg); } 100% { transform: translateX(40px); }
+}
+@keyframes brawlR {
+  0% { transform: none; } 35% { transform: translateX(-42px); } 45% { transform: translateX(-36px) rotate(6deg); }
+  55% { transform: translateX(-44px) rotate(-6deg); } 65% { transform: translateX(-38px) rotate(6deg); }
+  75% { transform: translateX(-42px) rotate(-6deg); } 100% { transform: translateX(-40px); }
+}
+@keyframes shake { from { transform: translateX(-3px) rotate(-3deg); } to { transform: translateX(3px) rotate(3deg); } }
+.sc-brawl .dust { bottom: 64px; opacity: 0; animation: dustin .3s .5s forwards, spin .7s .5s linear infinite, dustout .4s 1.6s forwards; }
+@keyframes dustin { to { opacity: .95; } }
+@keyframes dustout { to { opacity: 0; } }
+.sc-brawl .actor.dies .ai { animation: kod .8s 1.55s ease-in forwards; }
+.spark { width: 16px; height: 16px; }
+
+/* ---------- Caída de objetos ---------- */
+.sc-drop { --sA: #27425c; --sB: #0d1620; --dd: 1.35s; --gd: 1.9s; --wd: 1.3s; }
+.sc-drop .fall { bottom: 26px; margin-left: calc(var(--pw, 60px) / -2); animation: dropin .45s .9s cubic-bezier(.55, 0, 1, .6) both; }
+.sc-drop .fall.beside { margin-left: calc(var(--pw, 60px) / -2 + 66px); }
+@keyframes dropin { from { bottom: 300px; } to { bottom: 26px; } }
+.sc-drop .actor.dies .ai { animation: squash .5s 1.3s forwards; }
+@keyframes squash {
+  0% { transform: none; }
+  40% { transform: scale(1.2, .35); }
+  100% { transform: scale(1.1, .28); filter: grayscale(1) brightness(.6); }
+}
+.sc-drop .actor.lives.vic .ai { animation: dodge .6s 1.2s; }
+
+/* ---------- Plátano ---------- */
+.sc-slip { --sA: #3f5f2b; --sB: #101a0c; --dd: 2.3s; --gd: 2.8s; --wd: .9s; }
+.sc-slip .peel { bottom: 28px; z-index: 2; width: 36px; height: 24px; }
+.sc-slip .actor.dies .ai { animation: slipdie 2.4s .6s forwards; }
+@keyframes slipdie {
+  0% { transform: none; } 25% { transform: translateY(-10px) rotate(-30deg); }
+  55% { transform: translateY(-120px) rotate(-380deg); } 85% { transform: translateY(0) rotate(-720deg); }
+  100% { transform: translateY(-40px) rotate(-810deg); filter: grayscale(1) brightness(.6); }
+}
+.sc-slip .actor.lives.vic .ai { animation: sliplive 2s .6s forwards; }
+@keyframes sliplive {
+  0% { transform: none; } 25% { transform: translateY(-10px) rotate(-30deg); }
+  55% { transform: translateY(-120px) rotate(-380deg); } 85% { transform: translateY(0) rotate(-720deg); }
+  100% { transform: rotate(-720deg); }
+}
+
+/* ---------- Rayo ---------- */
+.sc-lightning { --sA: #2c3049; --sB: #090a10; --dd: 1s; --gd: 1.7s; --wd: .75s; }
+.whiteflash { position: absolute; inset: 0; z-index: 8; background: #fff; opacity: 0; animation: wflash .5s .55s; pointer-events: none; }
+@keyframes wflash { 0% { opacity: 0; } 10% { opacity: .95; } 30% { opacity: .1; } 45% { opacity: .7; } 100% { opacity: 0; } }
+.sc-lightning .bolt { top: 0; z-index: 6; opacity: 0; animation: boltk .5s .55s; }
+@keyframes boltk { 0% { opacity: 0; } 10% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; } }
+.sc-lightning .actor.dies .ai { animation: zap 1.5s .6s forwards; }
+@keyframes zap {
+  0% { filter: brightness(4); } 12% { filter: invert(1); } 24% { filter: brightness(3); } 36% { filter: invert(1); }
+  50% { filter: none; } 100% { filter: grayscale(1) brightness(.3) sepia(.5); }
+}
+.sc-lightning .actor.lives.vic .ai { animation: zaplive 1.2s .6s; }
+@keyframes zaplive {
+  0% { filter: brightness(4); } 12% { filter: invert(1); } 24% { filter: brightness(3); transform: translateY(-14px); }
+  50% { filter: none; transform: none; } 100% { filter: none; transform: none; }
+}
+
+/* ---------- Trampilla ---------- */
+.sc-trap { --sA: #4c3a20; --sB: #130d07; --dd: 1.5s; --gd: 2.2s; --wd: 1.2s; }
+.hole { position: absolute; bottom: 14px; z-index: 2; width: 104px; height: 26px; border-radius: 50%; background: radial-gradient(#000 55%, #1a1008); transform: scaleX(0); animation: holeopen .4s .6s forwards; }
+@keyframes holeopen { to { transform: scaleX(1); } }
+.sc-trap .actor.dies .ai { animation: sink 1s 1s ease-in forwards; }
+@keyframes sink { to { transform: translateY(130px) scale(.55); opacity: 0; } }
+.sc-trap .actor.lives.vic .ai { animation: dodge .6s 1s; }
+
+/* ---------- Veneno ---------- */
+.sc-poison { --sA: #3c2555; --sB: #120b1b; --dd: 2.6s; --gd: 3.1s; --wd: 1.7s; }
+.ptem { bottom: 36px; }
+.bub { position: absolute; bottom: 104px; z-index: 5; width: 8px; height: 8px; border-radius: 50%; background: #7be07b; opacity: 0; animation: bubup 2s var(--bd) infinite; }
+@keyframes bubup { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(-60px); } }
+.sc-poison .actor.vic.lives .ai { animation: woozy 2s .5s forwards; }
+.sc-poison .actor.dies .ai { animation: poisondie 2.6s .5s forwards; }
+@keyframes woozy {
+  0% { filter: none; } 20% { transform: rotate(-6deg); filter: hue-rotate(80deg) saturate(1.8); }
+  40% { transform: rotate(6deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(4deg); }
+  100% { transform: none; filter: none; }
+}
+@keyframes poisondie {
+  0% { filter: none; } 20% { transform: rotate(-6deg); filter: hue-rotate(80deg) saturate(1.8); }
+  40% { transform: rotate(6deg); } 60% { transform: rotate(-6deg); filter: hue-rotate(80deg) saturate(1.8); }
+  80% { transform: rotate(6deg); }
+  100% { transform: translate(10px, -34px) rotate(80deg); filter: grayscale(1) brightness(.55); }
+}
+
+/* ---------- Animal ---------- */
+.sc-animal { --sA: #31502a; --sB: #0e1a0b; --dd: 1.9s; --gd: 2.5s; --wd: 1.65s; }
+.critter { bottom: 26px; left: 110%; animation: critterin 1.1s .4s ease-out forwards; }
+.critter.chases { animation: critterin .9s .4s ease-out forwards, critterout .8s 1.7s ease-in forwards; }
+@keyframes critterin { from { left: 110%; } to { left: calc(var(--vx) + 30px); } }
+@keyframes critterout { to { left: 112%; } }
+.puff { bottom: 20px; z-index: 5; opacity: 0; animation: puffk .9s 1.5s forwards; }
+@keyframes puffk { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
+.sc-animal .actor.dies .ai { animation: vanish .25s 1.7s forwards; }
+@keyframes vanish { to { opacity: 0; transform: scale(.3); } }
+.sc-animal .actor.vic.lives .ai { animation: shiver .4s .8s 4; }
+@keyframes shiver { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+/* ---------- Precipicio ---------- */
+.sc-fall { --sA: #5b3a5e; --sB: #160d17; --dd: 1.6s; --gd: 2.4s; --wd: .95s; }
+.chasm { position: absolute; bottom: 0; z-index: 2; width: 120px; height: 40px; background: #050306; }
+.sc-fall .actor.dies .ai { animation: slidedown 1.3s 1s ease-in forwards; }
+@keyframes slidedown {
+  0% { transform: none; } 25% { transform: translateX(18px) rotate(14deg); }
+  100% { transform: translate(70px, 270px) rotate(200deg); }
+}
+.sc-fall .actor.lives.vic .ai { animation: wobble2 .8s 1s 2; }
+@keyframes wobble2 { 50% { transform: rotate(-14deg) translateX(10px); } }
+
+/* ---------- Globo ---------- */
+.sc-balloon { --sA: #3d6c99; --sB: #152b40; --wd: 1.5s; }
+.balloon { left: 50%; top: -88px; width: 34px; height: 80px; margin-left: -17px; z-index: 5; }
+.sc-balloon .actor.dies .ai { animation: floataway 3.2s .8s ease-in forwards; }
+@keyframes floataway { to { transform: translateY(-330px) rotate(6deg); } }
+.sc-balloon .actor.lives.vic .balloon { animation: balloonpop .1s 1.4s forwards; }
+@keyframes balloonpop { to { opacity: 0; } }
+.sc-balloon .actor.lives.vic .ai { animation: softfall 1.6s .8s forwards; }
+@keyframes softfall { 0% { transform: none; } 50% { transform: translateY(-60px); } 100% { transform: none; } }
+.sc-balloon .actor.dies .xeyes { display: none; }
+
+/* ---------- Regalo ---------- */
+.sc-item { --sA: #5c4a1e; --sB: #191307; --wd: 1.7s; }
+.gift { bottom: 26px; z-index: 4; }
+.gift.crate { width: 64px; height: 90px; margin-left: -32px; animation: giftin 1.4s ease-out both; }
+.gift.chest { width: 56px; height: 44px; margin-left: -28px; transform-origin: 50% 100%; animation: chestpop .5s .6s both; }
+@keyframes giftin { from { bottom: 280px; } to { bottom: 26px; } }
+@keyframes chestpop { from { transform: scale(0); } to { transform: scale(1); } }
+.sc-item .actor .ai { animation: joy .5s 1.5s 2; }
+@keyframes joy { 50% { transform: translateY(-22px); } }
+
+/* ---------- Esconderse / explorar ---------- */
+.sc-hide { --sA: #233a26; --sB: #09120a; }
+.bushfront { bottom: 20px; z-index: 5; width: 124px; height: 48px; }
+.sc-hide .actor .ai { animation: peek 1.6s ease-in-out infinite alternate; }
+@keyframes peek { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+
+.sc-explore { --sA: #2d4d3d; --sB: #0d1a14; }
+.tr { bottom: 34px; z-index: 2; width: 34px; height: 70px; opacity: .75; left: 104%; animation: treeslide 3.6s linear infinite; }
+.tr.t2 { animation-delay: -1.2s; } .tr.t3 { animation-delay: -2.4s; }
+@keyframes treeslide { from { left: 104%; } to { left: -14%; } }
+.sc-explore .actor .ai { animation: walk .5s ease-in-out infinite alternate; }
+@keyframes walk { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-6px) rotate(3deg); } }
+
+/* ---------- Herido ---------- */
+.sc-injured { --sA: #3a3b44; --sB: #121316; --wd: .5s; }
+.sc-injured .actor .ai { animation: wobble 1.2s ease-in-out infinite alternate; }
+@keyframes wobble { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.plaster { left: 18px; top: 4px; z-index: 5; width: 38px; height: 15px; transform: rotate(-14deg); }
+.orbit { position: absolute; left: 50%; top: -6px; width: 0; height: 0; z-index: 6; animation: spin 1.4s linear infinite; }
+.os { left: -7px; top: -7px; width: 14px; height: 14px; }
+.o1 { transform: translate(34px, 0); } .o2 { transform: translate(-17px, 29px); } .o3 { transform: translate(-17px, -29px); }
+
+/* ---------- Baile / fiesta ---------- */
+.sc-dance { --sA: #421e5c; --sB: #120720; }
+.sc-dance .actor .ai { animation: bounce .55s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .14s); }
+@keyframes bounce { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-18px) rotate(6deg); } }
+.noteh2 { bottom: 96px; z-index: 2; width: 18px; height: 26px; opacity: 0; animation: noteup 2.6s var(--nd) infinite; }
+@keyframes noteup { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) rotate(20deg); } }
+
+/* ---------- Banquete ---------- */
+.sc-feast { --sA: #5c3d1c; --sB: #1b1106; --dd: 1.6s; --gd: 2.2s; --wd: 1s; }
+.table { position: absolute; left: 8%; right: 8%; bottom: 20px; height: 34px; z-index: 4; border-radius: 6px; background: linear-gradient(180deg, #8a5a2a, #5a3a1c); }
+.food { bottom: 46px; z-index: 5; width: 40px; height: 36px; }
+.sc-feast .actor .ai { animation: chew .5s ease-in-out infinite alternate; }
+@keyframes chew { from { transform: translateY(0); } to { transform: translateY(-5px) scaleY(.97); } }
+.sc-feast .actor.dies .ai { animation: burst .7s 1.5s forwards; }
+@keyframes burst { 0% { transform: scale(1); } 60% { transform: scale(1.6); filter: brightness(1.4); } 100% { transform: scale(.1); opacity: 0; } }
+
+/* ---------- Duelo ---------- */
+.sc-mourn { --sA: #283246; --sB: #0b0f17; --dd: .6s; --gd: 1.3s; }
+.drop { position: absolute; top: -10px; z-index: 2; width: 2px; height: 12px; background: #9fc4ff; opacity: .5; animation: rain .9s var(--rd) linear infinite; }
+@keyframes rain { to { transform: translateY(250px); } }
+.tear { position: absolute; z-index: 5; opacity: 0; top: 44px; animation: tearfall 1s infinite; }
+.tear.t1 { left: 31px; } .tear.t2 { left: 45px; animation-delay: .3s; }
+
+/* ---------- Ruptura ---------- */
+.sc-split { --sA: #303645; --sB: #0e1015; --wd: .8s; }
+.sc-split .a-0 { animation: apartL 1.2s .7s ease-in forwards; }
+.sc-split.n2 .a-1, .sc-split.n3 .a-2 { animation: apartR 1.2s .7s ease-in forwards; }
+@keyframes apartL { to { transform: translateX(-22px) rotate(-6deg); } }
+@keyframes apartR { to { transform: translateX(22px) rotate(6deg); } }
+.bheart { position: absolute; left: 50%; bottom: 116px; z-index: 5; width: 48px; height: 48px; margin-left: -24px; }
+.bheart .hl, .bheart .hr { position: absolute; inset: 0; }
+.bheart svg { display: block; width: 100%; height: 100%; }
+.bheart .hl { clip-path: polygon(0 0, 52% 0, 44% 26%, 56% 50%, 44% 76%, 52% 100%, 0 100%); animation: hlk .6s .7s forwards; }
+.bheart .hr { clip-path: polygon(52% 0, 100% 0, 100% 100%, 52% 100%, 44% 76%, 56% 50%, 44% 26%); animation: hrk .6s .7s forwards; }
+@keyframes hlk { to { transform: translate(-14px, 8px) rotate(-22deg); } }
+@keyframes hrk { to { transform: translate(14px, 8px) rotate(22deg); } }
+
+/* ---------- Incómodo ---------- */
+.sc-awkward { --sA: #414b53; --sB: #12171a; }
+.sc-awkward .actor .ai { animation: sway 1.6s ease-in-out infinite alternate; }
+@keyframes sway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+.bubble {
+  position: absolute; left: calc(50% - 26px); bottom: 132px; z-index: 6; width: 52px; text-align: center;
+  padding: 2px 0; border-radius: 14px; background: #fff; color: #222; font-weight: 700; font-size: 1.2rem; line-height: 1.2;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.sweat { left: calc(70% - 30px); bottom: 118px; z-index: 6; opacity: 0; animation: tearfall 1.2s infinite; }
+
+/* ---------- Sartenazo ---------- */
+.sc-pan { --sA: #3a3a58; --sB: #121221; --dd: 1.5s; --gd: 2.1s; --wd: 1.2s; }
+.sc-pan .a-0 { animation: lunge 1.2s ease-in forwards; }
+@keyframes lunge { 0% { transform: none; } 60% { transform: none; } 100% { transform: translateX(46px); } }
+.sc-pan .pan { right: -40px; top: 14px; width: 64px; height: 30px; transform: rotate(-100deg); transform-origin: 20% 50%; animation: panswing .3s 1s ease-in forwards; }
+@keyframes panswing { to { transform: rotate(20deg); } }
+.sc-pan .orbit { opacity: 0; animation: spin 1.2s linear infinite, showx .1s 1.3s forwards; }
+.sc-pan .actor.vic.lives .ai { animation: panhit .7s 1.2s; }
+@keyframes panhit { 30% { transform: translateX(10px) rotate(10deg) scaleX(.9); } 100% { transform: none; } }
+.sc-pan .actor.dies .ai { animation: kod .8s 1.3s ease-in forwards; }
+
+/* ---------- Victoria y presentación ---------- */
+.sc-victory { --sA: #6d4c14; --sB: #1b1305; height: 232px; }
+.spot { position: absolute; inset: 0; z-index: 1; background: conic-gradient(from 180deg at 50% -10%, transparent 150deg, rgba(255,232,150,.3) 170deg 190deg, transparent 210deg); }
+.sc-victory .actor { bottom: 34px; }
+.sc-victory .actor .ai { animation: victorybounce 1s ease-in-out infinite alternate; }
+@keyframes victorybounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+.crown { left: 50%; top: -32px; z-index: 5; width: 56px; height: 38px; margin-left: -28px; }
+
+.sc-lineup {
+  height: auto; min-height: 150px; padding: 14px 10px;
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-content: center;
+  --sA: #2b3a2c; --sB: #10160f;
+}
+.lu { width: var(--sz); height: var(--sz); animation: popin .4s calc(var(--i) * .07s) both; }
+.lu .avatar { display: block; width: 100%; height: 100%; border: 2px solid rgba(255,255,255,.16); box-sizing: border-box; }
+@keyframes popin { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+
+/* ---------- Estático y movimiento reducido ---------- */
+.scene.static *, .scene.static { animation-duration: .001s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .scene *, .scene { animation-delay: 0s !important; }
+}
