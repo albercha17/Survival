@@ -67,6 +67,16 @@
         <div id="list-list"></div>
       </div>
 
+      <div class="card pace-card">
+        <span class="field-label">Duración de la partida</span>
+        <div class="segmented compact" id="pace-seg" role="radiogroup" aria-label="Duración de la partida">
+          <button class="seg" type="button" role="radio" data-pace="corta">Corta</button>
+          <button class="seg" type="button" role="radio" data-pace="media">Media</button>
+          <button class="seg" type="button" role="radio" data-pace="larga">Larga</button>
+        </div>
+        <p class="hint" id="pace-hint"></p>
+      </div>
+
       <p class="setup-error" id="setup-error"></p>
     </div>
 
@@ -219,6 +229,7 @@
 <script src="js/data.js"></script>
 <script src="js/events.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/scene-kit.js"></script>
 <script src="js/scenes.js"></script>
 <script src="js/narrator.js"></script>
 <script src="js/app.js"></script>

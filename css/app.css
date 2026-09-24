@@ -328,3 +328,16 @@ button { -webkit-tap-highlight-color: transparent; }
 .check-line { display: flex; align-items: center; gap: 10px; margin: 8px 0; color: var(--ink-dim); font-size: .9rem; }
 .check-line input { width: 20px; height: 20px; accent-color: var(--gold); }
 .avatar.photo { object-fit: cover; }
+
+/* ---------- Tipos de evento nuevos ---------- */
+.log-entry.type-theft { border-left-color: #5fb3d6; }
+.log-entry.type-betrayal { border-left-color: #b565e0; }
+.log-entry.type-heal { border-left-color: #6ed9a0; }
+.log-tag.type-theft { color: #5fb3d6; }
+.log-tag.type-betrayal { color: #b565e0; }
+.log-tag.type-heal { color: #6ed9a0; }
+
+/* ---------- Duración ---------- */
+.pace-card { margin-top: 12px; }
+.pace-card .field-label { margin-top: 0; }
+.chip-item { border-color: var(--gold); color: var(--gold); }

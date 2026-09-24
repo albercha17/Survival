@@ -19,7 +19,7 @@
     { name: 'Tobin', gender: 'chico', hair: 'rubio',     eyes: 'marrones' }
   ];
 
-  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [] };
+  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [], pace: 'media' };
   var prefs = { voice: false, speed: 1 };
   var data = { characters: [], lists: [] };
   var ui = { tab: 'chars', draft: null, loading: true };
@@ -43,7 +43,7 @@
     try {
       var raw = JSON.parse(localStorage.getItem(GAME_KEY));
       if(raw && raw.phase){
-        saved = { phase: raw.phase, selectedIds: raw.selectedIds || [], game: raw.game || null, queue: raw.queue || [] };
+        saved = { phase: raw.phase, selectedIds: raw.selectedIds || [], game: raw.game || null, queue: raw.queue || [], pace: raw.pace || 'media' };
       }
       var p = JSON.parse(localStorage.getItem(PREF_KEY));
       if(p) prefs = { voice: !!p.voice, speed: SPEEDS.indexOf(p.speed) !== -1 ? p.speed : 1 };
@@ -209,6 +209,21 @@
     $('btn-start').textContent = 'Comenzar los Juegos' + (n ? ' (' + n + ')' : '');
     renderChars();
     renderLists();
+    renderPace();
+  }
+
+  var PACE_HINT = {
+    corta: 'Más muertes y partida rápida.',
+    media: 'Equilibrio entre muertes y acciones.',
+    larga: 'Más robos, romances y traiciones antes del final.'
+  };
+  function renderPace(){
+    [].forEach.call(document.querySelectorAll('#pace-seg .seg'), function(b){
+      var on = b.getAttribute('data-pace') === saved.pace;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on);
+    });
+    $('pace-hint').textContent = PACE_HINT[saved.pace] || '';
   }
 
   function onCharListClick(ev){
@@ -569,7 +584,7 @@
 
   function beginGame(characters){
     stopNarration();
-    var game = Engine.newGame(characters);
+    var game = Engine.newGame(characters, saved.pace);
     saved.phase = 'playing';
     saved.game = game;
     saved.queue = [Engine.introEntry(game)];
@@ -647,6 +662,7 @@
       var isDead = !!dead[t.id];
       var chips = [];
       if(t.kills > 0) chips.push('<span class="chip chip-kills">Bajas: ' + t.kills + '</span>');
+      if(t.item && A.ITEMS[t.item]) chips.push('<span class="chip chip-item">Lleva ' + esc(A.ITEMS[t.item].short) + '</span>');
       var allies = t.allies.map(byId).filter(function(x){ return x && !dead[x.id]; });
       if(allies.length) chips.push('<span class="chip chip-ally">Aliados: ' + esc(allies.map(function(x){ return x.name; }).join(', ')) + '</span>');
       if(t.loverId){
@@ -722,6 +738,13 @@
     $('btn-save-list').addEventListener('click', saveListFromSelection);
     $('list-name').addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); saveListFromSelection(); } });
     $('btn-start').addEventListener('click', startGame);
+    $('pace-seg').addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-pace]');
+      if(!b) return;
+      saved.pace = b.getAttribute('data-pace');
+      persist();
+      renderPace();
+    });
     $('btn-account').addEventListener('click', openAccount);
     $('btn-close-account').addEventListener('click', closeSheets);
     $('account-body').addEventListener('click', onAccountClick);
