@@ -132,7 +132,8 @@
     var h = '<div class="cam"><div class="bgl"></div><div class="lyr back"></div>';
     this.actors.forEach(function(t, i){
       var photo = A.validPhoto(t.photo);
-      h += '<div class="actor a-' + i + (t.baby ? ' baby' : '') + '" style="left:' + (st.X[i] - st.SZ / 2) + 'px">' +
+      var tc = /^#[0-9a-fA-F]{6}$/.test(t.teamColor || '') ? t.teamColor : null;
+      h += '<div class="actor a-' + i + (t.baby ? ' baby' : '') + (tc ? ' team' : '') + '" style="left:' + (st.X[i] - st.SZ / 2) + 'px' + (tc ? ';--tc:' + tc : '') + '">' +
         '<div class="shadow"></div>' +
         '<div class="ai"><div class="br">' + A.avatar(t, 84) + A.xeyesFor(photo) + '</div></div>' +
         '<span class="who">' + esc(t.name) + '</span></div>';
@@ -154,6 +155,7 @@
   };
 
   SP.sky = function(kind){
+    if(!this.isStatic && (kind === 'day' || kind === 'dusk' || kind === 'warm') && Math.random() < 0.3) kind = ['day', 'dusk', 'warm', 'night'][Math.floor(Math.random() * 4)];
     var k = SKY[kind] || SKY.day;
     var s = this.scene;
     s.style.setProperty('--sA', k.a); s.style.setProperty('--sB', k.b);

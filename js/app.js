@@ -19,7 +19,9 @@
     { name: 'Tobin', gender: 'chico', hair: 'rubio',     eyes: 'marrones' }
   ];
 
-  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [], pace: 'media' };
+  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [], pace: 'media', mode: 'todos', teams: 2 };
+  var MODES = ['todos', 'equipos', 'parejas'];
+  var PACES = ['corta', 'media', 'larga'];
   var prefs = { voice: false, speed: 1 };
   var data = { characters: [], lists: [] };
   var ui = { tab: 'chars', draft: null, loading: true };
@@ -42,13 +44,31 @@
   function loadSaved(){
     try {
       var raw = JSON.parse(localStorage.getItem(GAME_KEY));
-      if(raw && raw.phase){
-        saved = { phase: raw.phase, selectedIds: raw.selectedIds || [], game: raw.game || null, queue: raw.queue || [], pace: raw.pace || 'media' };
+      if(raw && typeof raw === 'object' && ['setup', 'playing', 'victory'].indexOf(raw.phase) !== -1){
+        saved = {
+          phase: raw.phase,
+          selectedIds: Array.isArray(raw.selectedIds) ? raw.selectedIds.filter(function(x){ return typeof x === 'string'; }) : [],
+          game: validGame(raw.game) ? raw.game : null,
+          queue: Array.isArray(raw.queue) ? raw.queue.filter(validEntry) : [],
+          pace: PACES.indexOf(raw.pace) !== -1 ? raw.pace : 'media',
+          mode: MODES.indexOf(raw.mode) !== -1 ? raw.mode : 'todos',
+          teams: Math.max(2, Math.min(8, parseInt(raw.teams, 10) || 2))
+        };
       }
       var p = JSON.parse(localStorage.getItem(PREF_KEY));
       if(p) prefs = { voice: !!p.voice, speed: SPEEDS.indexOf(p.speed) !== -1 ? p.speed : 1 };
     } catch(e){}
     if((saved.phase === 'playing' || saved.phase === 'victory') && !saved.game) saved.phase = 'setup';
+  }
+  function validEntry(e){
+    return !!(e && typeof e === 'object' && typeof e.text === 'string' && Array.isArray(e.ids) && typeof e.type === 'string');
+  }
+  function validGame(g){
+    if(!g || typeof g !== 'object' || !Array.isArray(g.tributes) || !Array.isArray(g.log)) return false;
+    if(!g.tributes.every(function(t){ return t && typeof t.id === 'string' && typeof t.name === 'string' && Array.isArray(t.allies); })) return false;
+    if(!g.log.every(validEntry)) return false;
+    if(g.teams && !Array.isArray(g.teams)) return false;
+    return true;
   }
   function persist(){
     try { localStorage.setItem(GAME_KEY, JSON.stringify(saved)); } catch(e){}
@@ -209,6 +229,7 @@
     $('btn-start').textContent = 'Comenzar los Juegos' + (n ? ' (' + n + ')' : '');
     renderChars();
     renderLists();
+    renderMode();
     renderPace();
   }
 
@@ -217,6 +238,33 @@
     media: 'Equilibrio entre muertes y acciones.',
     larga: 'Más robos, romances y traiciones antes del final.'
   };
+  function maxTeams(n){ return Math.max(2, Math.min(8, Math.floor(n / 2))); }
+  function renderMode(){
+    var n = saved.selectedIds.length;
+    [].forEach.call(document.querySelectorAll('#mode-seg .seg'), function(b){
+      var on = b.getAttribute('data-mode') === saved.mode;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on);
+    });
+    var mt = maxTeams(n);
+    if(saved.teams > mt) saved.teams = mt;
+    if(saved.teams < 2) saved.teams = 2;
+    $('teams-stepper').hidden = saved.mode !== 'equipos';
+    $('teams-count').textContent = saved.teams;
+    $('btn-teams-minus').disabled = saved.teams <= 2;
+    $('btn-teams-plus').disabled = saved.teams >= mt;
+    var hint;
+    if(saved.mode === 'todos') hint = 'Cada uno va por su cuenta. Gana el último en pie.';
+    else if(n < 4) hint = 'Necesitas al menos 4 personajes para jugar ' + (saved.mode === 'parejas' ? 'por parejas.' : 'por equipos.');
+    else if(saved.mode === 'parejas'){
+      var p = Math.floor(n / 2);
+      hint = p + ' parejas' + (n % 2 ? ' (una será un trío)' : '') + ', repartidas al azar. Gana la última pareja en pie.';
+    } else {
+      var k = saved.teams, base = Math.floor(n / k), extra = n % k;
+      hint = k + ' equipos de ' + (extra ? base + ' o ' + (base + 1) : base) + ', repartidos al azar. Gana el último equipo en pie.';
+    }
+    $('mode-hint').textContent = hint;
+  }
   function renderPace(){
     [].forEach.call(document.querySelectorAll('#pace-seg .seg'), function(b){
       var on = b.getAttribute('data-pace') === saved.pace;
@@ -497,7 +545,14 @@
     var fighters = g.tributes.filter(function(t){ return !t.baby; });
     var dead = fighters.filter(function(t){ return deadMap[t.id]; }).length;
     var kids = Object.keys(revealedBabies()).length;
-    $('alive-pill').textContent = (fighters.length - dead) + ' de ' + fighters.length + ' vivos' + (kids ? ' · ' + kids + (kids === 1 ? ' bebé' : ' bebés') : '');
+    var extraTeams = '';
+    if(Engine.isTeamMode && Engine.isTeamMode(g)){
+      var tset = {};
+      fighters.forEach(function(t){ if(!deadMap[t.id] && t.team) tset[t.team] = 1; });
+      var nt = Object.keys(tset).length;
+      extraTeams = ' · ' + nt + (nt === 1 ? ' equipo' : ' equipos');
+    }
+    $('alive-pill').textContent = (fighters.length - dead) + ' de ' + fighters.length + ' vivos' + extraTeams + (kids ? ' · ' + kids + (kids === 1 ? ' bebé' : ' bebés') : '');
   }
 
   function renderStage(entry, isStatic){
@@ -583,7 +638,15 @@
     if(busy || saved.phase !== 'playing') return;
     if(!saved.queue.length){
       if(saved.game.finished){ enterVictory(); return; }
-      saved.queue = Engine.simulateDay(saved.game);
+      try {
+        saved.queue = Engine.simulateDay(saved.game);
+      } catch(err){
+        if(window.console) console.error(err);
+        playing = false;
+        updateControls();
+        toast('Algo ha fallado al generar el día. La partida está guardada: pulsa Continuar para reintentar.');
+        return;
+      }
       persist();
       if(!saved.queue.length){ enterVictory(); return; }
     }
@@ -592,10 +655,10 @@
 
   function beginGame(characters){
     stopNarration();
-    var game = Engine.newGame(characters, saved.pace);
+    var game = Engine.newGame(characters, { pace: saved.pace, mode: saved.mode, teams: saved.teams });
     saved.phase = 'playing';
     saved.game = game;
-    saved.queue = [Engine.introEntry(game)];
+    saved.queue = Engine.introEntries ? Engine.introEntries(game) : [Engine.introEntry(game)];
     persist();
     playing = true;
     renderGame();
@@ -605,6 +668,12 @@
 
   function startGame(){
     var chars = selectedChars();
+    if(saved.mode !== 'todos' && chars.length < 4){
+      $('setup-error').textContent = 'Para jugar ' + (saved.mode === 'parejas' ? 'por parejas' : 'por equipos') + ' necesitas al menos 4 personajes.';
+      ui.tab = 'chars';
+      renderSetup();
+      return;
+    }
     if(chars.length < 2){
       $('setup-error').textContent = 'Elige al menos 2 personajes para empezar.';
       ui.tab = 'chars';
@@ -635,7 +704,19 @@
     $('victory-days').textContent = g.round;
     $('victory-kills').textContent = w ? w.kills : 0;
     var vic = g.log.filter(function(e){ return e.type === 'victory'; })[0];
-    var kid = vic && vic.ids && vic.ids[1] ? byId(vic.ids[1]) : null;
+    var teamWin = g.winnerTeam && Engine.teamLabel ? g.winnerTeam : null;
+    $('victory-team').hidden = !teamWin;
+    if(teamWin){
+      var winners = g.tributes.filter(function(t){ return t.alive && !t.baby && t.team === teamWin; });
+      var col = A.safeColor ? A.safeColor((Engine.teamOf(g, teamWin) || {}).color) : '#e9b83a';
+      $('victory-avatar').innerHTML = '';
+      $('victory-eyebrow').textContent = g.mode === 'parejas' ? 'Pareja ganadora' : 'Equipo ganador';
+      $('victory-name').textContent = Engine.teamLabel(g, teamWin);
+      $('victory-kills').textContent = g.tributes.filter(function(t){ return t.team === teamWin; }).reduce(function(s, t){ return s + (t.kills || 0); }, 0);
+      $('victory-team').style.setProperty('--tc', col);
+      $('victory-team').innerHTML = winners.map(function(t){ return '<div class="vt-member">' + A.avatar(t, 64) + '<span>' + esc(t.name) + '</span></div>'; }).join('');
+    }
+    var kid = vic && vic.ids && !teamWin && vic.ids[1] ? byId(vic.ids[1]) : null;
     $('victory-family').hidden = !kid;
     if(kid) $('victory-family').textContent = 'Se lleva a casa a ' + kid.name + ', ' + (kid.gender === 'chica' ? 'la bebé' : 'el bebé') + '.';
     var fallen = g.tributes.filter(function(t){ return !t.alive && !t.baby; }).sort(function(a, b){ return (b.diedRound || 0) - (a.diedRound || 0); });
@@ -667,12 +748,14 @@
     var g = saved.game;
     var list = g.tributes.filter(function(t){ return !t.baby || babies[t.id]; }).sort(function(a, b){
       if(!!a.baby !== !!b.baby) return a.baby ? 1 : -1;
+      if((a.team || '') !== (b.team || '')) return (a.team || '').localeCompare(b.team || '');
       var da = !!dead[a.id], db = !!dead[b.id];
       if(da !== db) return da ? 1 : -1;
       if(!da) return (b.kills - a.kills) || a.name.localeCompare(b.name);
       return (b.diedRound || 0) - (a.diedRound || 0);
     });
-    $('roster-list').innerHTML = list.map(function(t){
+    var head = g.edition ? '<p class="roster-edition">Edición: <b>' + esc(g.edition.name) + '</b> · ' + esc(g.edition.desc) + '</p>' : '';
+    $('roster-list').innerHTML = head + list.map(function(t){
       var isDead = !!dead[t.id];
       var chips = [];
       if(t.baby){
@@ -680,6 +763,11 @@
         chips.push('<span class="chip chip-baby">Bebé de ' + esc(pn.join(' y ')) + '</span>');
         chips.push('<span class="chip chip-baby">Protegido por la arena</span>');
       }
+      if(t.team && Engine.teamLabel){
+        var col = A.safeColor ? A.safeColor(t.teamColor) : '#9aa0a8';
+        chips.push('<span class="chip chip-team" style="border-color:' + col + ';color:' + col + '">' + esc(Engine.teamLabel(g, t.team)) + '</span>');
+      }
+      if(t.trait && A.TRAITS && A.TRAITS[t.trait]) chips.push('<span class="chip chip-trait">' + esc(t.gender === 'chica' ? A.TRAITS[t.trait].f : A.TRAITS[t.trait].m) + '</span>');
       if(t.kills > 0) chips.push('<span class="chip chip-kills">Bajas: ' + t.kills + '</span>');
       if(t.item && A.ITEMS[t.item]) chips.push('<span class="chip chip-item">Lleva ' + esc(A.ITEMS[t.item].short) + '</span>');
       var allies = t.allies.map(byId).filter(function(x){ return x && !dead[x.id]; });
@@ -757,6 +845,16 @@
     $('btn-save-list').addEventListener('click', saveListFromSelection);
     $('list-name').addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); saveListFromSelection(); } });
     $('btn-start').addEventListener('click', startGame);
+    $('mode-seg').addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-mode]');
+      if(!b) return;
+      saved.mode = b.getAttribute('data-mode');
+      $('setup-error').textContent = '';
+      persist();
+      renderMode();
+    });
+    $('btn-teams-minus').addEventListener('click', function(){ saved.teams = Math.max(2, saved.teams - 1); persist(); renderMode(); });
+    $('btn-teams-plus').addEventListener('click', function(){ saved.teams = Math.min(maxTeams(saved.selectedIds.length), saved.teams + 1); persist(); renderMode(); });
     $('pace-seg').addEventListener('click', function(ev){
       var b = ev.target.closest('[data-pace]');
       if(!b) return;
@@ -800,6 +898,16 @@
     else if(saved.phase === 'victory') renderVictory();
     else renderSetup();
   }
+
+  var lastErrToast = 0;
+  function onGlobalError(){
+    var now = Date.now();
+    if(now - lastErrToast < 5000) return;
+    lastErrToast = now;
+    try { toast('Algo ha fallado, pero tu partida sigue guardada.'); } catch(e){}
+  }
+  window.addEventListener('error', onGlobalError);
+  window.addEventListener('unhandledrejection', onGlobalError);
 
   function init(){
     loadSaved();
