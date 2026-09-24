@@ -535,10 +535,19 @@
     return l.length ? l[l.length - 1] : null;
   }
 
+  var lastRoundShown = -1;
   function updateHeader(){
     var g = saved.game;
     var last = lastLogged();
     var round = last ? last.round : 0;
+    if(round !== lastRoundShown){
+      lastRoundShown = round;
+      var dn = $('day-number');
+      dn.classList.remove('pop');
+      void dn.offsetWidth;
+      dn.classList.add('pop');
+    }
+    renderStrip();
     $('day-eyebrow').textContent = round === 0 ? 'Prólogo' : 'Día';
     $('day-number').textContent = round === 0 ? '·' : round;
     var deadMap = revealedDead();
@@ -555,6 +564,21 @@
     $('alive-pill').textContent = (fighters.length - dead) + ' de ' + fighters.length + ' vivos' + extraTeams + (kids ? ' · ' + kids + (kids === 1 ? ' bebé' : ' bebés') : '');
   }
 
+  var stripDead = {};
+  function renderStrip(){
+    var g = saved.game;
+    if(!g) return;
+    var dead = revealedDead(), babies = revealedBabies();
+    var list = g.tributes.filter(function(t){ return !t.baby || babies[t.id]; });
+    var box = $('tribute-strip');
+    box.innerHTML = list.map(function(t){
+      var col = A.safeColor && t.teamColor ? A.safeColor(t.teamColor) : '';
+      var justDied = dead[t.id] && !stripDead[t.id];
+      return '<span class="ts' + (dead[t.id] ? ' dead' : '') + (justDied ? ' just' : '') + (t.baby ? ' baby' : '') + '"' + (col ? ' style="--tc:' + col + '"' : '') + '>' + A.avatar(t, 30) + '</span>';
+    }).join('');
+    stripDead = dead;
+  }
+
   function renderStage(entry, isStatic){
     A.Scenes.render($('stage-avatars'), entry, byId, isStatic);
     $('stage-day').textContent = entry.round === 0 ? 'Apertura' : 'Día ' + entry.round;
@@ -569,6 +593,16 @@
     div.innerHTML = '<div class="log-meta"><span class="log-day">' + (entry.round === 0 ? 'Apertura' : 'Día ' + entry.round) + '</span>' +
       '<span class="log-tag type-' + entry.type + '">' + Engine.label(entry.type) + '</span></div>' +
       '<p class="log-text">' + esc(entry.text) + '</p>';
+    var ids = (entry.ids || []).filter(function(id){ return byId(id); });
+    if(ids.length && ids.length <= 8){
+      var faces = document.createElement('div');
+      faces.className = 'log-faces';
+      faces.innerHTML = ids.slice(0, 6).map(function(id){
+        var t = byId(id);
+        return '<span class="lf' + ((entry.deaths || []).indexOf(id) !== -1 ? ' dead' : '') + '">' + A.avatar(t, 22) + '</span>';
+      }).join('');
+      div.insertBefore(faces, div.firstChild);
+    }
     return div;
   }
   function addHistory(entry){
@@ -590,6 +624,8 @@
     $('screen-game').hidden = false;
     $('screen-victory').hidden = true;
     $('confirm-reset-bar').hidden = true;
+    stripDead = revealedDead();
+    lastRoundShown = -1;
     var log = $('log');
     log.innerHTML = '';
     saved.game.log.forEach(function(e){ log.insertBefore(historyRow(e), log.firstChild); });
@@ -623,10 +659,26 @@
     current = null;
   }
 
+  function startBar(entry){
+    var fill = $('narr-fill');
+    if(!fill) return;
+    fill.getAnimations().forEach(function(a){ a.cancel(); });
+    var ms = Math.max(600, entry.text.length * (prefs.voice ? 60 : 30) / prefs.speed);
+    fill.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: ms, fill: 'forwards', easing: 'linear' });
+  }
+  function killFlash(entry){
+    if(!(entry.deaths || []).length) return;
+    var st = $('stage');
+    st.classList.remove('kill');
+    void st.offsetWidth;
+    st.classList.add('kill');
+  }
   function present(entry){
     busy = true;
     current = entry;
     renderStage(entry, false);
+    startBar(entry);
+    setTimeout(function(){ if(current === entry) killFlash(entry); }, 1200 / prefs.speed);
     Narrator.narrate($('stage-text'), entry.text, { voice: prefs.voice, speed: prefs.speed }, function(){
       commit(entry);
       busy = false;
@@ -696,6 +748,15 @@
     $('screen-setup').hidden = true;
     $('screen-game').hidden = true;
     $('screen-victory').hidden = false;
+    var conf = $('victory-confetti');
+    if(conf && !conf.childNodes.length){
+      var cols = ['#ff5c8a', '#ffd54a', '#6ee7ff', '#7be07b', '#c792ff', '#f4a13a'];
+      var h = '';
+      for(var ci = 0; ci < 36; ci++){
+        h += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;background:' + cols[ci % cols.length] + ';animation-delay:' + (Math.random() * 3).toFixed(2) + 's;animation-duration:' + (2.6 + Math.random() * 2.2).toFixed(2) + 's"></i>';
+      }
+      conf.innerHTML = h;
+    }
     var g = saved.game;
     var w = g.winnerId ? byId(g.winnerId) : null;
     $('victory-avatar').innerHTML = w ? A.avatar(w, 120) : '';
@@ -720,8 +781,8 @@
     $('victory-family').hidden = !kid;
     if(kid) $('victory-family').textContent = 'Se lleva a casa a ' + kid.name + ', ' + (kid.gender === 'chica' ? 'la bebé' : 'el bebé') + '.';
     var fallen = g.tributes.filter(function(t){ return !t.alive && !t.baby; }).sort(function(a, b){ return (b.diedRound || 0) - (a.diedRound || 0); });
-    $('memorial-list').innerHTML = fallen.map(function(t){
-      return '<div class="memorial-row"><span class="who">' + A.avatar(t, 30) + '<span class="name">' + esc(t.name) + '</span></span><span class="when">Día ' + t.diedRound + '</span></div>';
+    $('memorial-list').innerHTML = fallen.map(function(t, mi){
+      return '<div class="memorial-row" style="animation-delay:' + (0.4 + mi * 0.08).toFixed(2) + 's"><span class="who">' + A.avatar(t, 30) + '<span class="name">' + esc(t.name) + '</span></span><span class="when">Día ' + t.diedRound + '</span></div>';
     }).join('');
   }
 
@@ -888,6 +949,8 @@
     $('btn-speed').addEventListener('click', cycleSpeed);
     $('btn-voice').addEventListener('click', toggleVoice);
     $('btn-skip').addEventListener('click', skip);
+    $('stage').addEventListener('click', function(){ if(saved.phase === 'playing'){ $('stage-hint').hidden = true; skip(); } });
+    $('tribute-strip').addEventListener('click', function(){ renderRoster(); openSheet('roster-sheet'); });
 
     $('btn-replay-same').addEventListener('click', replaySameCast);
     $('btn-back-setup').addEventListener('click', backToSetup);

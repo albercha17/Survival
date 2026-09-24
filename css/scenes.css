@@ -9,7 +9,16 @@
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--sA), var(--sB));
 }
-.scene .cam { position: absolute; inset: 0; }
+.scene .lens, .scene .cam { position: absolute; inset: 0; }
+.scene .actor .idle { width: 100%; height: 100%; transform-origin: 50% 100%; animation: breathe 3.2s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.025, .982) translateY(1px); } }
+.scene .lids { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.scene .lids ellipse { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: blinklid 4.6s infinite; animation-delay: inherit; }
+@keyframes blinklid { 0%, 93% { transform: scaleY(0); } 95.5% { transform: scaleY(1); } 98%, 100% { transform: scaleY(0); } }
+.scene .tuft { position: absolute; bottom: 30px; z-index: 1; width: 14px; height: 14px; pointer-events: none; transform-origin: 50% 100%;
+  background: var(--g); filter: brightness(1.3); animation: sway 2.6s ease-in-out infinite alternate;
+  clip-path: polygon(0 100%, 20% 20%, 35% 100%, 50% 0, 65% 100%, 80% 25%, 100% 100%); }
+@keyframes sway { from { rotate: -7deg; } to { rotate: 7deg; } }
 .scene .bgl, .scene .lyr { position: absolute; inset: 0; pointer-events: none; }
 .scene .lyr.back { z-index: 2; }
 .scene .lyr.front { z-index: 5; }
@@ -155,3 +164,10 @@
 .scene .lu.team { display: flex; flex-direction: column; align-items: center; gap: 4px; width: auto; height: auto; }
 .scene .lu.team .avatar { width: var(--sz); height: var(--sz); border: 3px solid var(--tc); }
 .scene .lu-name { max-width: calc(var(--sz) + 20px); font-size: .62rem; color: #fff; background: rgba(0,0,0,.45); padding: 0 6px; border-radius: 999px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* escenas nuevas (tanda 4) */
+.scene .snowflake { position: absolute; top: -10px; width: 6px; height: 6px; border-radius: 50%; background: #fff; opacity: .9; animation: snowfall 3.4s linear infinite; }
+@keyframes snowfall { 0% { transform: translate(0, 0); } 50% { transform: translate(12px, 110px); } 100% { transform: translate(-6px, 230px); } }
+.scene .water.deep { height: 58px; bottom: 0; }
+.scene .ufobeam { position: absolute; bottom: 20px; width: 90px; height: 150px; opacity: 0; transform-origin: 50% 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(160,255,190,.75), rgba(160,255,190,.15)); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); }

@@ -865,8 +865,7 @@
       var key = entry.scene || DEFAULT[entry.type] || 'explore';
       var actors = (entry.ids || []).map(byId).filter(Boolean);
       if(!actors.length){ el.innerHTML = ''; return; }
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      isStatic = !!isStatic || reduce;
+      isStatic = !!isStatic;
       if(key === 'lineup' || actors.length > 3){ lineup(el, actors, isStatic); return; }
       if(key === 'victory') actors = actors.slice(0, 2);
       if(!SC[key]) key = 'explore';

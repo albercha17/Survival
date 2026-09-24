@@ -125,10 +125,13 @@
         </div>
       </div>
 
+      <button class="tribute-strip" id="tribute-strip" type="button" aria-label="Ver tributos"></button>
       <div class="stage" id="stage">
         <div class="stage-avatars" id="stage-avatars"></div>
         <div class="stage-meta"><span class="stage-day" id="stage-day"></span><span class="stage-tag" id="stage-tag"></span></div>
         <p class="stage-text" id="stage-text" aria-live="polite"></p>
+        <div class="narr-bar" aria-hidden="true"><i id="narr-fill"></i></div>
+        <span class="stage-hint" id="stage-hint">Toca la escena para avanzar</span>
       </div>
 
       <p class="section-title">Crónica</p>
@@ -151,6 +154,7 @@
     </div>
     <div class="content">
       <div class="victory-card">
+        <div class="victory-confetti" id="victory-confetti" aria-hidden="true"></div>
         <div class="victory-avatar" id="victory-avatar"></div>
         <p class="victory-eyebrow" id="victory-eyebrow">Superviviente</p>
         <h2 class="victory-name" id="victory-name">—</h2>
@@ -250,11 +254,13 @@
 <script src="js/events.js"></script>
 <script src="js/events2.js"></script>
 <script src="js/events3.js"></script>
+<script src="js/events4.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/scene-kit.js"></script>
 <script src="js/scenes.js"></script>
 <script src="js/scenes2.js"></script>
 <script src="js/scenes3.js"></script>
+<script src="js/scenes4.js"></script>
 <script src="js/narrator.js"></script>
 <script src="js/app.js"></script>
 </body>

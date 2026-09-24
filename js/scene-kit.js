@@ -111,6 +111,7 @@
     this.hasDeath = this.vi >= 0;
     if(this.vi < 0) this.vi = this.n - 1;
     this.propName = entry.prop;
+    this.reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     this.entry = entry;
   }
 
@@ -129,26 +130,28 @@
 
   SP.build = function(){
     var st = this, root = this.root;
-    var h = '<div class="cam"><div class="bgl"></div><div class="lyr back"></div>';
+    var h = '<div class="lens"><div class="cam"><div class="bgl"></div><div class="lyr back"></div>';
     this.actors.forEach(function(t, i){
       var photo = A.validPhoto(t.photo);
       var tc = /^#[0-9a-fA-F]{6}$/.test(t.teamColor || '') ? t.teamColor : null;
       h += '<div class="actor a-' + i + (t.baby ? ' baby' : '') + (tc ? ' team' : '') + '" style="left:' + (st.X[i] - st.SZ / 2) + 'px' + (tc ? ';--tc:' + tc : '') + '">' +
         '<div class="shadow"></div>' +
-        '<div class="ai"><div class="br">' + A.avatar(t, 84) + A.xeyesFor(photo) + '</div></div>' +
+        '<div class="ai"><div class="idle" style="animation-delay:-' + (Math.random() * 3).toFixed(2) + 's"><div class="br">' + A.avatar(t, 84) + st.lidsFor(t, photo) + A.xeyesFor(photo) + '</div></div></div>' +
         '<span class="who">' + esc(t.name) + '</span></div>';
     });
-    h += '<div class="lyr front"></div><div class="lyr fx"></div></div>';
+    h += '<div class="lyr front"></div><div class="lyr fx"></div></div></div>';
     root.innerHTML = '<div class="scene sc-' + this.entry.scene + ' n' + this.n + (this.isStatic ? ' static' : '') + '">' + h + '</div>';
     this.scene = root.firstChild;
     this.cam = this.scene.querySelector('.cam');
+    this.lens = this.scene.querySelector('.lens');
     this.bgl = this.scene.querySelector('.bgl');
     this.back = this.scene.querySelector('.lyr.back');
     this.front = this.scene.querySelector('.lyr.front');
     this.fx = this.scene.querySelector('.lyr.fx');
     this.els = [].map.call(this.scene.querySelectorAll('.actor'), function(actor){
-      return { actor: actor, ai: actor.querySelector('.ai'), br: actor.querySelector('.br'), xeyes: actor.querySelector('.xeyes') };
+      return { actor: actor, ai: actor.querySelector('.ai'), idle: actor.querySelector('.idle'), br: actor.querySelector('.br'), xeyes: actor.querySelector('.xeyes'), lids: actor.querySelector('.lids') };
     });
+    if(!this.isStatic && !this.reduce) this.anim(this.lens, [{ transform: 'scale(1.09) translateY(6px)' }, { transform: 'scale(1)' }], { d: 900, ease: 'cubic-bezier(.2,.7,.3,1)' });
     this.actors.forEach(function(t, i){
       st.anim(st.els[i].actor, [{ opacity: 0 }, { opacity: 1 }], { d: 260, delay: i * 90, ease: 'ease-out' });
     });
@@ -176,6 +179,16 @@
     if(kind !== 'cave') h += '<svg class="hills h1" viewBox="0 0 400 80" preserveAspectRatio="none"><path d="M0 52Q50 14 110 44T230 36T340 46T400 30V80H0z"/></svg><svg class="hills h2" viewBox="0 0 400 80" preserveAspectRatio="none"><path d="M0 60Q70 30 150 56T290 50T400 58V80H0z"/></svg>';
     h += '<div class="ground"></div>';
     this.bgl.innerHTML = h;
+    if(kind !== 'cave' && kind !== 'party'){
+      for(var g = 0; g < 6; g++){
+        var tuft = document.createElement('i');
+        tuft.className = 'tuft';
+        tuft.style.left = (rnd(-2, 98)).toFixed(1) + '%';
+        tuft.style.animationDelay = (-rnd(0, 3)).toFixed(2) + 's';
+        tuft.style.transform = 'scale(' + rnd(.7, 1.2).toFixed(2) + ')';
+        this.front.appendChild(tuft);
+      }
+    }
     if(d.indexOf('petals') !== -1) this.petals(9);
     if(kind === 'storm') this.rain(26);
   };
@@ -287,6 +300,23 @@
   /* ----- muertes ----- */
   SP.xeyes = function(i, delay){
     this.anim(this.els[i].xeyes, [{ opacity: 0 }, { opacity: 1 }], { d: 60, delay: delay });
+    this.stopIdle(i, delay);
+  };
+  SP.stopIdle = function(i, delay){
+    var e = this.els[i];
+    var run = function(){ if(e.idle) e.idle.style.animation = 'none'; if(e.lids) e.lids.style.display = 'none'; };
+    if(this.isStatic || !delay) run(); else setTimeout(run, delay);
+  };
+  SP.zoom = function(x, delay, scale, dur){
+    if(this.isStatic || this.reduce) return;
+    this.lens.style.transformOrigin = Math.round(x) + 'px 60%';
+    var s = scale || 1.14;
+    this.anim(this.lens, [{ transform: 'scale(1)' }, { transform: 'scale(' + s + ')', offset: .25 }, { transform: 'scale(' + s + ')', offset: .7 }, { transform: 'scale(1)' }], { d: dur || 1300, delay: delay, ease: 'ease-in-out' });
+  };
+  SP.lidsFor = function(t, photo){
+    if(photo || t.baby) return '';
+    var sk = A.skinOf ? A.skinOf(t.skin).hex : '#e6c29f';
+    return '<svg class="lids" viewBox="0 0 64 64" aria-hidden="true" style="animation-delay:' + rnd(0, 4).toFixed(2) + 's"><ellipse cx="26.5" cy="31.5" rx="3.9" ry="3.3" fill="' + sk + '"/><ellipse cx="37.5" cy="31.5" rx="3.9" ry="3.3" fill="' + sk + '"/></svg>';
   };
   SP.ghost = function(i, delay){
     var el = document.createElement('div');
@@ -302,10 +332,12 @@
     ], { d: 2600, delay: delay, ease: 'ease-out' });
   };
   SP.grayOut = function(i, delay, dur){
+    this.stopIdle(i, delay);
     this.anim(this.els[i].br, [{ filter: 'none' }, { filter: 'grayscale(1) brightness(.6)' }], { d: dur || 400, delay: delay });
   };
   SP.dieFall = function(i, delay, dir){
     dir = dir || 1;
+    this.zoom(this.X[i] + this.pos[i].x, delay - 150, 1.13, 1400);
     this.body(i, [
       { transform: 'none' },
       { transform: 'translate(' + (6 * dir) + 'px,0) rotate(' + (-8 * dir) + 'deg)', offset: .22 },
@@ -383,7 +415,8 @@
     o = o || {};
     var el = document.createElement('div');
     el.className = 'word';
-    el.style.left = (o.x == null ? this.W / 2 : o.x) + 'px';
+    var wx = o.x == null ? this.W / 2 : o.x;
+    el.style.left = Math.max(66, Math.min(this.W - 66, wx)) + 'px';
     el.style.top = (o.y == null ? 22 : o.y) + 'px';
     el.innerHTML = '<svg viewBox="0 0 120 70" preserveAspectRatio="none"><path d="M60 2l9 14 15-9 3 17 17-3-7 16 15 8-16 9 8 15-18-2-2 17-14-11-13 12-6-16-17 6 3-17-16-6 14-10-9-14 18 2 1-18 12 10z" fill="#ffd54a" stroke="#d1382f" stroke-width="3" stroke-linejoin="round"/></svg><b>' + esc(text) + '</b>';
     this.fx.appendChild(el);
@@ -414,6 +447,7 @@
     }
   };
   SP.shake = function(delay, amp, dur){
+    if(this.reduce) return;
     amp = amp || 6; dur = dur || 350;
     var fr = [{ transform: 'translate(0,0)' }], k;
     for(k = 0; k < 8; k++) fr.push({ transform: 'translate(' + rnd(-amp, amp).toFixed(1) + 'px,' + rnd(-amp, amp).toFixed(1) + 'px)' });
