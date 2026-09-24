@@ -581,6 +581,14 @@
 
   function renderStage(entry, isStatic){
     A.Scenes.render($('stage-avatars'), entry, byId, isStatic);
+    $('stage').setAttribute('data-type', entry.type);
+    var sc = $('stage-avatars').querySelector('.scene');
+    if(sc){
+      var rb = document.createElement('div');
+      rb.className = 'scene-ribbon type-' + entry.type + (isStatic ? ' still' : '');
+      rb.textContent = (entry.round === 0 ? 'Apertura' : 'Día ' + entry.round) + ' · ' + Engine.label(entry.type);
+      sc.appendChild(rb);
+    }
     $('stage-day').textContent = entry.round === 0 ? 'Apertura' : 'Día ' + entry.round;
     var tag = $('stage-tag');
     tag.className = 'log-tag type-' + entry.type;
@@ -611,12 +619,17 @@
     while(log.children.length > 120) log.removeChild(log.lastChild);
   }
 
+  var IC = { play: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>', pause: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg>', crown: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l1-11 5 5 3-7 3 7 5-5 1 11z" fill="currentColor"/></svg>', spk: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>', mute: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>', skip: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5l9 7-9 7zM13 5l7 7-7 7z" fill="currentColor"/></svg>' };
   function updateControls(){
-    $('btn-play').textContent = playing ? 'Pausa' : (saved.queue.length || !saved.game.finished ? 'Continuar' : 'Ver victoria');
+    var label = playing ? 'Pausa' : (saved.queue.length || !saved.game.finished ? 'Continuar' : 'Ver victoria');
+    var icon = playing ? IC.pause : (label === 'Ver victoria' ? IC.crown : IC.play);
+    $('btn-play').innerHTML = icon + '<span>' + label + '</span>';
     $('btn-speed').textContent = prefs.speed + '×';
     var v = $('btn-voice');
     v.setAttribute('aria-pressed', prefs.voice ? 'true' : 'false');
-    v.textContent = prefs.voice ? 'Voz: sí' : 'Voz: no';
+    v.setAttribute('aria-label', prefs.voice ? 'Voz activada' : 'Voz desactivada');
+    v.innerHTML = (prefs.voice ? IC.spk : IC.mute) + '<span>Voz</span>';
+    $('btn-skip').innerHTML = IC.skip + '<span>Saltar</span>';
   }
 
   function renderGame(){

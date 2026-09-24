@@ -355,7 +355,32 @@ button { -webkit-tap-highlight-color: transparent; }
 @keyframes tsdie { 0% { transform: scale(1); filter: none; } 30% { transform: scale(1.5); box-shadow: 0 0 0 3px #e2493f, 0 0 14px #e2493f; } 100% { transform: scale(1); } }
 
 /* ---------- Escenario ---------- */
-.stage { position: relative; cursor: pointer; }
+.stage { position: relative; cursor: pointer; --tcol: var(--line); border-color: color-mix(in srgb, var(--tcol) 55%, var(--line)); transition: border-color .5s; }
+.stage[data-type="death"] { --tcol: var(--blood); }
+.stage[data-type="romance"], .stage[data-type="family"] { --tcol: var(--romance); }
+.stage[data-type="alliance"], .stage[data-type="heal"] { --tcol: var(--alliance); }
+.stage[data-type="fight"] { --tcol: var(--flame-1); }
+.stage[data-type="theft"] { --tcol: #5fb3d6; }
+.stage[data-type="betrayal"] { --tcol: #b565e0; }
+.stage[data-type="item"], .stage[data-type="victory"], .stage[data-type="announcement"] { --tcol: var(--gold); }
+.stage-meta { display: none; }
+.scene-ribbon { position: absolute; left: 10px; top: 10px; z-index: 30; padding: 3px 10px 3px 8px; border-radius: 6px 12px 12px 6px;
+  font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff; pointer-events: none;
+  background: rgba(10,12,8,.72); border-left: 3px solid var(--rc, var(--gold)); backdrop-filter: blur(3px);
+  animation: ribbonin .6s cubic-bezier(.2,.8,.3,1) both, ribbonout .5s ease 2.6s forwards; }
+.scene-ribbon.still { animation: none; }
+.scene-ribbon.type-death { --rc: var(--blood); }
+.scene-ribbon.type-romance, .scene-ribbon.type-family { --rc: var(--romance); }
+.scene-ribbon.type-alliance, .scene-ribbon.type-heal { --rc: var(--alliance); }
+.scene-ribbon.type-fight { --rc: var(--flame-1); }
+.scene-ribbon.type-theft { --rc: #5fb3d6; }
+.scene-ribbon.type-betrayal { --rc: #b565e0; }
+@keyframes ribbonin { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: none; } }
+@keyframes ribbonout { to { opacity: 0; transform: translateX(-12px); } }
+.ctl { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ctl .ic { width: 16px; height: 16px; flex: none; }
+.ctl-main .ic { width: 18px; height: 18px; }
+@media (max-width: 360px) { .ctl:not(.ctl-main) span { display: none; } }
 .stage.kill { animation: killflash 1.1s ease; }
 @keyframes killflash { 0% { box-shadow: inset 0 0 0 0 rgba(226,73,63,0); } 25% { box-shadow: inset 0 0 60px 6px rgba(226,73,63,.55), 0 0 30px -4px rgba(226,73,63,.6); } 100% { box-shadow: var(--shadow-soft); } }
 .narr-bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: -4px; }
