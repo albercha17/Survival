@@ -254,10 +254,11 @@
     else { S.wobble(v, 1750, 6, 600); S.emote(v, 'sweat', 1800, 1200); S.hop(v, 1700, 20, 300); }
   };
 
-  SC.slip = function(S){
+  SC.slip = function(S, c){
     S.sky('day');
     var v = S.vi, x = S.X[v];
-    var peel = S.prop('banana', { x: x, y: 27, w: 36, h: 24, z: 2, back: true });
+    var slipName = c.prop === 'soap' ? 'soap' : 'banana';
+    var peel = S.prop(slipName, { x: x, y: 27, w: slipName === 'soap' ? 34 : 36, h: slipName === 'soap' ? 20 : 24, z: 2, back: true });
     S.mv(v, -90, 0, 0, 1);
     S.walk(v, 0, 250, 950);
     for(var i = 0; i < 3; i++) S.floaty('note', x - 40 + i * 20, 128, 350 + i * 250, { size: 14, rise: 34, d: 1100 });
@@ -334,9 +335,11 @@
 
   SC.animal = function(S, c){
     S.sky('day');
-    var v = S.vi, x = vx(S), duck = c.prop === 'duck', sz = duck ? [62, 58] : [70, 70];
-    var word = duck ? '¡CUAC!' : '¡ÑAM!';
-    var cr = S.prop(duck ? 'duck' : 'bear', { x: S.W + 50, y: 26, w: sz[0], h: sz[1], z: 4 });
+    var v = S.vi, x = vx(S), critter = c.prop || 'bear';
+    var sz = { duck: [62, 58], bear: [70, 70], crab: [56, 44], croc: [98, 44] }[critter] || [70, 70];
+    var duck = critter === 'duck';
+    var word = { duck: '¡CUAC!', crab: '¡CLAC!', croc: '¡ÑAM!', bear: '¡ÑAM!' }[critter] || '¡ÑAM!';
+    var cr = S.prop(critter, { x: S.W + 50, y: 26, w: sz[0], h: sz[1], z: 4 });
     var tx = x + 64 - (S.W + 50);
     var frames = [{ transform: 'translate(0,0)' }], k, steps = 6;
     for(k = 1; k <= steps; k++) frames.push({ transform: 'translate(' + (tx * k / steps) + 'px,' + (k % 2 ? -8 : 0) + 'px)' });
@@ -828,7 +831,8 @@
 
   SC.victory = function(S){
     S.sky('gold');
-    var x = S.X[0];
+    if(S.n === 2){ S.mv(0, S.W * .5 - S.X[0] - 34, 0, 0, 1); S.mv(1, S.W * .5 + 62 - S.X[1], 0, 0, 1); S.emote(1, 'heart', 1200, 1600); S.hop(1, 1500, 18, 400); }
+    var x = S.X[0] + S.pos[0].x;
     S.body(0, [{ transform: 'scale(1.32)' }, { transform: 'scale(1.32)' }], 0, 10);
     var crown = S.attach(0, 'crown', { w: 50, h: 34, left: 17, top: -26, onBody: true });
     S.anim(crown, [{ opacity: 0, transform: 'translateY(-90px) rotate(-30deg)' }, { opacity: 1, transform: 'translateY(0) rotate(0)', offset: .7 }, { opacity: 1, transform: 'translateY(-8px)', offset: .85 }, { opacity: 1, transform: 'translateY(0)' }], { d: 900, delay: 500, ease: 'ease-in' });
@@ -840,8 +844,11 @@
     S.confetti(40, 300);
     for(var i = 0; i < 7; i++) S.burst(rnd(30, S.W - 30), rnd(110, 190), 500 + i * 380, { n: 14, r: 62 });
     for(var j = 0; j < 3; j++) S.body(0, [{ transform: 'scale(1.32)' }, { transform: 'scale(1.32) translateY(-18px)' }, { transform: 'scale(1.32)' }], 1400 + j * 700, 500, 'ease-out');
-    S.word('¡GANADOR!', 900, { x: x, y: 4, d: 1600 });
+    S.word('¡VICTORIA!', 900, { x: x, y: 4, d: 1600 });
   };
+
+  A.SceneScripts = SC;
+  A.SceneHelpers = { mid: mid, vx: vx, approach: approach, propSize: propSize, dieBy: dieBy, shadowAt: shadowAt, loop: loop, flyArc: flyArc, orbitStars: orbitStars, crack: crack, tableBetween: tableBetween };
 
   function lineup(root, actors, isStatic){
     var n = actors.length;
@@ -861,7 +868,7 @@
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       isStatic = !!isStatic || reduce;
       if(key === 'lineup' || actors.length > 3){ lineup(el, actors, isStatic); return; }
-      if(key === 'victory') actors = [actors[0]];
+      if(key === 'victory') actors = actors.slice(0, 2);
       if(!SC[key]) key = 'explore';
       entry = Object.assign({}, entry, { scene: key });
       var S = new Stage(el, entry, actors, isStatic);

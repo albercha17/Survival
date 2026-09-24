@@ -341,3 +341,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .pace-card { margin-top: 12px; }
 .pace-card .field-label { margin-top: 0; }
 .chip-item { border-color: var(--gold); color: var(--gold); }
+.chip-baby { border-color: #c8a2ff; color: #c8a2ff; }
+.log-entry.type-family { border-left-color: #c8a2ff; }
+.log-tag.type-family { color: #c8a2ff; }
+.victory-family { margin: -6px 0 12px; color: #c8a2ff; font-size: .95rem; }

@@ -249,13 +249,14 @@
   var CATEGORY_LABEL = {
     announcement: 'Aviso', death: 'Muerte', alliance: 'Alianza', romance: 'Amorío',
     item: 'Hallazgo', fight: 'Enfrentamiento', neutral: 'Crónica', victory: 'Victoria',
-    theft: 'Robo', betrayal: 'Traición', heal: 'Auxilio'
+    theft: 'Robo', betrayal: 'Traición', heal: 'Auxilio', family: 'Familia'
   };
 
   var remainingAlive = 0;
   var currentDeaths = [];
 
   function safeKill(t, cause, round){
+    if(t.baby) return false;
     if(remainingAlive <= 1) return false;
     t.alive = false; t.cause = cause; t.diedRound = round;
     remainingAlive -= 1;
@@ -294,11 +295,45 @@
   }
   function relOf(m){
     if(m.length === 2){
+      if(m[0].baby || m[1].baby) return 'family';
       if(m[0].loverId === m[1].id) return 'lover';
       if(m[0].allies.indexOf(m[1].id) !== -1) return 'ally';
       return 'stranger';
     }
     return 'group';
+  }
+
+  function fighters(game){ return game.tributes.filter(function(t){ return t.alive && !t.baby; }); }
+  function babyCount(game){
+    return game.tributes.filter(function(t){ return t.baby; }).length +
+      game.tributes.filter(function(t){ return t.preg; }).length;
+  }
+  function babyName(a, b){
+    var x = a.name.split(' ')[0], y = b.name.split(' ')[0];
+    var n = x.slice(0, Math.ceil(x.length / 2)) + y.slice(Math.floor(y.length / 2)).toLowerCase();
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  }
+  function createBaby(a, b){
+    var baby = {
+      id: 'baby-' + Date.now().toString(36) + rand(100000),
+      name: babyName(a, b), gender: choice(['chico', 'chica']),
+      hair: choice([a, b]).hair, eyes: choice([a, b]).eyes, skin: choice([a, b]).skin || 'claro', photo: null,
+      alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null,
+      baby: true, parents: [a.id, b.id], born: curGame.round, preg: null
+    };
+    curGame.tributes.push(baby);
+    return baby;
+  }
+  function maybePregnant(a, b, p){
+    if(a.gender === b.gender) return;
+    var mother = a.gender === 'chica' ? a : b, father = mother === a ? b : a;
+    if(mother.preg || mother.baby || father.baby) return;
+    if(babyCount(curGame) >= 3) return;
+    if(Math.random() < p) mother.preg = { by: father.id, due: curGame.round + 3 + rand(3), reveal: curGame.round + 1, revealed: false };
+  }
+  function fling(a, b, p){
+    if(a.loverId !== b.id && isFree(a) && isFree(b)) setLovers(a, b);
+    maybePregnant(a, b, p);
   }
 
   function matchSpec(t, spec){
@@ -326,7 +361,7 @@
   function lethalPart(e){
     var parts = fxParts(e);
     for(var i = 0; i < parts.length; i++){
-      var r = /^(kill|die)_([abc])(_unally)?$/.exec(parts[i]);
+      var r = /^(kill|die)_([abc])(_by_([abc]))?(_unally)?$/.exec(parts[i]);
       if(r) return r;
     }
     return null;
@@ -341,6 +376,8 @@
       if(e.n !== m.length) return;
       if(!(e.rel === 'any' || e.rel === rel)) return;
       if(e.free && !free) return;
+      var hasBaby = m.some(function(t){ return t.baby; });
+      if(hasBaby !== !!e.family) return;
       var lethal = !!lethalPart(e);
       if(wantDeath && !lethal) return;
       if(!wantDeath && lethal && !e.live) return;
@@ -365,13 +402,14 @@
     var L = lethalPart(e);
     fxParts(e).forEach(function(fx){
       if(/^(kill|die)_/.test(fx)){
-        var r = /^(kill|die)_([abc])(_unally)?$/.exec(fx);
+        var r = /^(kill|die)_([abc])(_by_([abc]))?(_unally)?$/.exec(fx);
         var victim = o[r[2] === 'a' ? 0 : r[2] === 'b' ? 1 : 2];
-        if(r[3]) removeAlly(a, b);
+        if(r[5]) removeAlly(a, b);
         if(pick.near){ ok = false; return; }
         ok = safeKill(victim, e.k, ctx.round);
         if(ok && r[1] === 'kill'){
-          o.filter(function(t){ return t !== victim; })[0].kills += 1;
+          var killer = r[4] ? o[r[4] === 'a' ? 0 : r[4] === 'b' ? 1 : 2] : o.filter(function(t){ return t !== victim; })[0];
+          killer.kills += 1;
         }
       } else if(fx === 'love') setLovers(a, b);
       else if(fx === 'breakup'){ a.loverId = null; b.loverId = null; }
@@ -386,6 +424,12 @@
         if(oldC) oldC.loverId = null;
         setLovers(a, c);
       }
+      else if(fx === 'fling') fling(a, b, 0.65);
+      else if(fx === 'tryBaby') maybePregnant(a, b, 0.85);
+      else if(fx === 'caughtbreak'){ a.loverId = null; c.loverId = null; if(isFree(b)) setLovers(a, b); maybePregnant(a, b, 0.6); }
+      else if(fx === 'breakupac'){ a.loverId = null; c.loverId = null; }
+      else if(fx === 'steal3'){ x.item = A.ITEMS[a.item]; c.item = a.item; a.item = null; }
+      else if(fx === 'stork'){ x.baby = createBaby(a, b); }
       else if(fx === 'get'){ x.item = A.ITEMS[e.it]; a.item = e.it; }
       else if(fx === 'steal'){ x.item = A.ITEMS[(o[e.n === 3 ? 2 : 1]).item]; var vic = o[e.n === 3 ? 2 : 1]; a.item = vic.item; vic.item = null; }
       else if(fx === 'give'){ x.item = A.ITEMS[a.item]; b.item = a.item; a.item = null; }
@@ -396,6 +440,7 @@
     var text = ok ? e.text(a, b, c, x) : (e.live ? e.live(a, b, c, x) : a.name + ' lo intenta, pero la arena decide darles un respiro.');
     var order = e.swap3 && o.length === 3 ? e.swap3.map(function(i){ return o[i]; }) :
       (e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o);
+    if(x.baby) order = [order[0], x.baby, order[1]];
     var prop = e.prop || (x.item ? x.item.prop : undefined);
     var res = ev(ok ? e.type : 'fight', text, order, e.scene, prop);
     if(x.item2) res.prop2 = x.item2.prop;
@@ -515,6 +560,13 @@
   }
 
   function pickGroup(game, alive, isFirst){
+    var babies = game.tributes.filter(function(t){ return t.baby && t.alive; });
+    if(babies.length && Math.random() < 0.2){
+      var bb = choice(babies);
+      var parents = bb.parents.map(function(id){ return byId(game, id); }).filter(function(p){ return p && p.alive && !p.baby; });
+      if(parents.length === 2 && Math.random() < 0.4) return [parents[0], parents[1], bb];
+      if(parents.length) return [choice(parents), bb];
+    }
     var a = choice(alive);
     var r = Math.random();
     var lover = a.loverId ? byId(game, a.loverId) : null;
@@ -530,7 +582,7 @@
   }
 
   function makeTribute(c){
-    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null };
+    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null, baby: false, parents: null, preg: null };
   }
 
   var PACE = { corta: 0.36, media: 0.22, larga: 0.15 };
@@ -543,6 +595,18 @@
     if((game.streak || 0) >= 3) p *= 0.4;
     return Math.min(0.8, p);
   }
+
+  var BIRTH = [
+    function(m, b){ return m.name + ' da a luz en mitad de la arena, sin epidural y con un pato mirando. Nace ' + b.name + ', un bebé sano y con muy mal genio.'; },
+    function(m, b, f){ return 'Los dolores de parto sorprenden a ' + m.name + ' entre dos arbustos. ' + (f ? f.name + ' se desmaya y se pierde el momento. ' : '') + 'Nace ' + b.name + ', que lo primero que hace es llorar y lo segundo, llorar más fuerte.'; },
+    function(m, b){ return 'Entre gritos, respiraciones raras y una ardilla que mira sin ayudar, ' + m.name + ' trae al mundo a ' + b.name + '. Los patrocinadores envían una caja de pañales, una manta y una mirada de compasión.'; },
+    function(m, b, f){ return m.name + ' rompe aguas justo cuando lo tenía todo planeado. Nace ' + b.name + ' a la luz de la luna' + (f ? ', ante ' + f.name + ', que no sabe si aplaudir o salir corriendo' : '') + '. Todas las armas de la arena se bajan un momento por respeto.'; }
+  ];
+  var REVEAL = [
+    function(m, f){ return m.name + ' lleva días con náuseas y unas ganas incontrolables de comer barro. Al final lo entiende: espera un bebé.' + (f ? ' ' + f.name + ' se desmaya del susto.' : ''); },
+    function(m, f){ return m.name + ' se toca la barriga y siente una patadita. Confirmado: esto ya no es un juego de supervivencia, es una guardería.' + (f ? ' ' + f.name + ' ya ha empezado a llorar.' : ''); },
+    function(m, f){ return 'Una ardilla con bata blanca (o eso cree ' + m.name + ') da la noticia: vienen un bebé y muchas noches sin dormir.' + (f ? ' ' + f.name + ' pide un momento a solas.' : ''); }
+  ];
 
   A.Engine = {
     label: function(type){ return CATEGORY_LABEL[type] || 'Crónica'; },
@@ -575,7 +639,7 @@
     },
 
     simulateDay: function(game){
-      var alive = game.tributes.filter(function(t){ return t.alive; });
+      var alive = fighters(game);
       if(alive.length <= 1) return [];
       game.round += 1;
       var round = game.round;
@@ -586,7 +650,21 @@
       curGame = game;
 
       var entry;
-      if(alive.length === 2){
+      var mom = alive.length > 2 ? game.tributes.filter(function(t){ return t.alive && !t.baby && t.preg && t.preg.due <= round; })[0] : null;
+      var mom2 = alive.length > 2 && !mom ? game.tributes.filter(function(t){ return t.alive && !t.baby && t.preg && !t.preg.revealed && t.preg.reveal <= round; })[0] : null;
+      if(mom){
+        var dad = byId(game, mom.preg.by);
+        var baby = createBaby(mom, dad || mom);
+        mom.preg = null;
+        var withDad = dad && dad.alive && !dad.baby;
+        entry = ev('family', choice(BIRTH)(mom, baby, withDad ? dad : null), withDad ? [mom, baby, dad] : [mom, baby], 'birth');
+        entry.babyId = baby.id;
+      } else if(mom2 && Math.random() < 0.75){
+        mom2.preg.revealed = true;
+        var dad2 = byId(game, mom2.preg.by);
+        var withDad2 = dad2 && dad2.alive && !dad2.baby;
+        entry = ev('family', choice(REVEAL)(mom2, withDad2 ? dad2 : null), withDad2 ? [mom2, dad2] : [mom2], 'pregnant');
+      } else if(alive.length === 2){
         var pair = shuffle(alive);
         var dom = pickDominant(pair[0], pair[1]);
         safeKill(dom[1], 'final_duel', round);
@@ -605,12 +683,16 @@
       entry.deaths = currentDeaths.slice();
 
       var entries = [entry];
-      var left = game.tributes.filter(function(t){ return t.alive; });
+      var left = fighters(game);
       if(left.length <= 1){
         game.finished = true;
         game.winnerId = left[0] ? left[0].id : null;
         if(left[0]){
-          entries.push({ type: 'victory', scene: 'victory', round: round, deaths: [], ids: [left[0].id], text: choice(TPL.victory)(left[0]) });
+          var kids = game.tributes.filter(function(t){ return t.baby && t.alive; });
+          var kid = kids.filter(function(k){ return k.parents.indexOf(left[0].id) !== -1; })[0] || kids[0];
+          var vt = choice(TPL.victory)(left[0]);
+          if(kid) vt += ' Se lleva a casa a ' + kid.name + ', que ha sobrevivido a todo con una sonrisa.';
+          entries.push({ type: 'victory', scene: 'victory', round: round, deaths: [], ids: kid ? [left[0].id, kid.id] : [left[0].id], text: vt });
         }
       }
       return entries;
