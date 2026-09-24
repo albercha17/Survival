@@ -362,11 +362,11 @@
     var b = $('account-body');
     if(!Store.isCloud){
       b.innerHTML = '<div class="auth"><p>Ahora mismo tus personajes y listas se guardan <b>solo en este dispositivo</b>.</p>' +
-        '<p>Para guardarlos en la nube con Firebase y usarlos desde cualquier dispositivo, pon la configuración de tu proyecto en <code>js/config.js</code>. Los pasos están en el README.</p></div>';
+        '<p>Para guardarlos en la nube con Supabase y usarlos desde cualquier dispositivo, pon la URL y la clave de tu proyecto en <code>js/config.js</code>. Los pasos están en el README.</p></div>';
       return;
     }
     if(Store.isSignedIn()){
-      b.innerHTML = '<div class="auth"><p>Sesión iniciada como <b>' + esc(Store.userEmail() || '') + '</b>. Tus personajes y listas se guardan en Firebase.</p>' +
+      b.innerHTML = '<div class="auth"><p>Sesión iniciada como <b>' + esc(Store.userEmail() || '') + '</b>. Tus personajes y listas se guardan en Supabase.</p>' +
         '<button class="btn-secondary" id="btn-signout" type="button">Cerrar sesión</button></div>';
       return;
     }
