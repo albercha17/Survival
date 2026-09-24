@@ -288,18 +288,61 @@
   function openCharEditor(id){
     var c = id ? data.characters.filter(function(x){ return x.id === id; })[0] : null;
     ui.draft = c
-      ? { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes }
-      : { name: '', gender: rand(2) ? 'chica' : 'chico', hair: A.HAIR[rand(A.HAIR.length)].id, eyes: A.EYES[rand(A.EYES.length)].id };
+      ? { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin || 'claro', photo: c.photo || null }
+      : { name: '', gender: rand(2) ? 'chica' : 'chico', hair: A.HAIR[rand(A.HAIR.length)].id, eyes: A.EYES[rand(A.EYES.length)].id, skin: 'claro', photo: null };
     $('char-sheet-title').textContent = c ? 'Editar personaje' : 'Nuevo personaje';
     $('char-name').value = ui.draft.name;
     $('btn-delete-char').hidden = !c;
     $('char-error').textContent = '';
+    showCrop(false);
     renderEditor();
     openSheet('char-sheet');
   }
+
+  var cropper = null;
+  function showCrop(on){
+    $('crop-panel').hidden = !on;
+    $('char-fields').hidden = on;
+  }
+  function pickPhoto(){
+    $('photo-file').value = '';
+    $('photo-file').click();
+  }
+  function onPhotoChosen(){
+    var f = $('photo-file').files[0];
+    if(!f) return;
+    A.Photo.loadImage(f).then(function(img){
+      if(!cropper) cropper = new A.Photo.Cropper($('crop-canvas'), $('crop-zoom'));
+      ui.draft.name = $('char-name').value;
+      cropper.setImage(img);
+      $('chk-comic').checked = false;
+      $('crop-error').textContent = '';
+      showCrop(true);
+    }).catch(function(e){ toast(e.message); });
+  }
+  function applyCrop(){
+    var raw = cropper.exportRaw();
+    var sug = A.Photo.suggest(raw);
+    ui.draft.photo = A.Photo.stylize(raw, $('chk-comic').checked);
+    ui.draft.skin = sug.skin;
+    ui.draft.hair = sug.hair;
+    showCrop(false);
+    renderEditor();
+    toast('Foto añadida. He ajustado pelo y piel según la foto.');
+  }
+  function cancelCrop(){
+    cropper.clear();
+    showCrop(false);
+  }
   function renderEditor(){
     var d = ui.draft;
+    var hasPhoto = A.validPhoto(d.photo);
     $('char-preview').innerHTML = A.avatar(d, 104);
+    $('btn-photo').textContent = hasPhoto ? 'Cambiar foto' : 'Añadir foto';
+    $('btn-photo-remove').hidden = !hasPhoto;
+    $('photo-hint').textContent = hasPhoto
+      ? 'Con foto, el pelo, los ojos y la piel solo se usan si la quitas (y para los textos del narrador).'
+      : 'La foto se reduce y se guarda solo en tu cuenta. Se usará como cara del personaje.';
     $('gender-seg').innerHTML = A.GENDERS.map(function(g){
       var on = d.gender === g.id;
       return '<button class="seg' + (on ? ' active' : '') + '" type="button" role="radio" aria-checked="' + on + '" data-gender="' + g.id + '">' + g.label + '</button>';
@@ -311,6 +354,7 @@
     }
     $('hair-swatches').innerHTML = swatches(A.HAIR, d.hair, 'hair');
     $('eyes-swatches').innerHTML = swatches(A.EYES, d.eyes, 'eyes');
+    $('skin-swatches').innerHTML = swatches(A.SKIN, d.skin, 'skin');
   }
   function onEditorClick(ev){
     var t = ev.target.closest('button');
@@ -319,6 +363,7 @@
     if(t.hasAttribute('data-gender')) d.gender = t.getAttribute('data-gender');
     else if(t.hasAttribute('data-hair')) d.hair = t.getAttribute('data-hair');
     else if(t.hasAttribute('data-eyes')) d.eyes = t.getAttribute('data-eyes');
+    else if(t.hasAttribute('data-skin')) d.skin = t.getAttribute('data-skin');
     else return;
     renderEditor();
   }
@@ -584,7 +629,7 @@
 
   function replaySameCast(){
     var chars = saved.game.tributes.map(function(t){
-      return { id: t.id, name: t.name, gender: t.gender, hair: t.hair, eyes: t.eyes };
+      return { id: t.id, name: t.name, gender: t.gender, hair: t.hair, eyes: t.eyes, skin: t.skin, photo: t.photo };
     });
     beginGame(chars);
   }
@@ -685,6 +730,11 @@
     $('btn-save-char').addEventListener('click', saveCharacter);
     $('btn-delete-char').addEventListener('click', deleteCharacter);
     $('btn-cancel-char').addEventListener('click', closeSheets);
+    $('btn-photo').addEventListener('click', pickPhoto);
+    $('photo-file').addEventListener('change', onPhotoChosen);
+    $('btn-photo-remove').addEventListener('click', function(){ ui.draft.photo = null; renderEditor(); });
+    $('btn-crop-ok').addEventListener('click', applyCrop);
+    $('btn-crop-cancel').addEventListener('click', cancelCrop);
     $('char-name').addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); saveCharacter(); } });
 
     $('sheet-backdrop').addEventListener('click', closeSheets);

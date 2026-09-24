@@ -46,6 +46,8 @@
 
   var XEYES = '<svg class="xeyes" viewBox="0 0 84 84" aria-hidden="true"><circle cx="35" cy="41.5" r="6" fill="#e6c29f"/><circle cx="49" cy="41.5" r="6" fill="#e6c29f"/><path d="M31 37.5l8 8M39 37.5l-8 8M45 37.5l8 8M53 37.5l-8 8" stroke="#111" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
+  var XEYES_PHOTO = '<svg class="xeyes" viewBox="0 0 84 84" aria-hidden="true"><circle cx="29.4" cy="35.3" r="7" fill="#fff" fill-opacity=".85"/><circle cx="54.6" cy="35.3" r="7" fill="#fff" fill-opacity=".85"/><path d="M25 31l8.8 8.8M33.8 31L25 39.8M50.2 31L59 39.8M59 31l-8.8 8.8" stroke="#111" stroke-width="2.6" stroke-linecap="round"/></svg>';
+
   function pr(name, cls, style){
     return '<div class="pr pr-' + name + (cls ? ' ' + cls : '') + '"' + (style ? ' style="' + style + '"' : '') + '>' + P[name] + '</div>';
   }
@@ -232,7 +234,7 @@
       actors.forEach(function(t, i){
         var dead = deaths.indexOf(t.id) !== -1;
         h += '<div class="actor a-' + i + (dead ? ' dies' : ' lives') + (i === vi ? ' vic' : '') + '" style="--x:' + xs[i] + '%;--i:' + i + '">' +
-          '<div class="ai">' + A.avatar(t, 84) + XEYES + (aiExtra[i] || '') + '</div>' +
+          '<div class="ai">' + A.avatar(t, 84) + (A.validPhoto(t.photo) ? XEYES_PHOTO : XEYES) + (aiExtra[i] || '') + '</div>' +
           (extra[i] || '') + '<span class="who">' + esc(t.name) + '</span></div>';
       });
       h += (out.post || '');

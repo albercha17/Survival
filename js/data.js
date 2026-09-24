@@ -22,7 +22,7 @@
     if(error) throw new Error(error.message || String(error));
   }
   function clean(c){
-    return { name: String(c.name || '').trim().slice(0, 40), gender: c.gender === 'chica' ? 'chica' : 'chico', hair: c.hair, eyes: c.eyes };
+    return { name: String(c.name || '').trim().slice(0, 40), gender: c.gender === 'chica' ? 'chica' : 'chico', hair: c.hair, eyes: c.eyes, skin: c.skin || 'claro', photo: window.Arena.validPhoto(c.photo) ? c.photo : null };
   }
 
   var Store = {
@@ -54,7 +54,7 @@
 
     listCharacters: function(){
       if(!cloud) return Promise.resolve(lsGet(LS_CHARS));
-      return sb.from('characters').select('id,name,gender,hair,eyes').order('created_at').then(function(r){ fail(r.error); return r.data; });
+      return sb.from('characters').select('id,name,gender,hair,eyes,skin,photo').order('created_at').then(function(r){ fail(r.error); return r.data; });
     },
     saveCharacter: function(c){
       var row = clean(c);
@@ -70,7 +70,7 @@
         return Promise.resolve(c.id ? Object.assign({ id: c.id }, row) : c);
       }
       var q = c.id ? sb.from('characters').update(row).eq('id', c.id) : sb.from('characters').insert(row);
-      return q.select('id,name,gender,hair,eyes').single().then(function(r){ fail(r.error); return r.data; });
+      return q.select('id,name,gender,hair,eyes,skin,photo').single().then(function(r){ fail(r.error); return r.data; });
     },
     saveManyCharacters: function(list){
       if(!cloud){
@@ -79,7 +79,7 @@
         lsSet(LS_CHARS, all.concat(added));
         return Promise.resolve(added);
       }
-      return sb.from('characters').insert(list.map(clean)).select('id,name,gender,hair,eyes').then(function(r){ fail(r.error); return r.data; });
+      return sb.from('characters').insert(list.map(clean)).select('id,name,gender,hair,eyes,skin,photo').then(function(r){ fail(r.error); return r.data; });
     },
     deleteCharacter: function(id){
       if(!cloud){

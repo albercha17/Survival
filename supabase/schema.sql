@@ -49,3 +49,7 @@ create policy "own list members" on public.list_members
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
+
+-- Fotos y tono de piel (ejecutar también en proyectos ya creados; es idempotente).
+alter table public.characters add column if not exists skin  text not null default 'claro';
+alter table public.characters add column if not exists photo text;

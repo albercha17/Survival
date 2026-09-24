@@ -156,24 +156,47 @@
       <button class="icon-btn ghost" id="btn-cancel-char" type="button" aria-label="Cerrar">✕</button>
     </div>
     <div class="sheet-body">
-      <div class="char-preview" id="char-preview"></div>
+      <div id="crop-panel" hidden>
+        <p class="hint crop-hint">Mueve la foto con el dedo y acércala con el pellizco o el deslizador hasta que la cara llene el círculo y los ojos queden sobre las marcas.</p>
+        <div class="crop-wrap"><canvas id="crop-canvas" width="264" height="264"></canvas></div>
+        <input class="zoom" id="crop-zoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+        <label class="check-line" for="chk-comic"><input id="chk-comic" type="checkbox"> Estilo cómic</label>
+        <p class="setup-error" id="crop-error"></p>
+        <div class="sheet-actions">
+          <button class="btn-primary" id="btn-crop-ok" type="button">Usar esta foto</button>
+          <button class="btn-text" id="btn-crop-cancel" type="button">Cancelar</button>
+        </div>
+      </div>
 
-      <label class="field-label" for="char-name">Nombre</label>
-      <input class="text-input" id="char-name" type="text" maxlength="40" placeholder="Cómo se llama" autocomplete="off">
+      <div id="char-fields">
+        <div class="char-preview" id="char-preview"></div>
+        <div class="photo-row">
+          <button class="btn-small" id="btn-photo" type="button">Añadir foto</button>
+          <button class="btn-small quiet" id="btn-photo-remove" type="button" hidden>Quitar foto</button>
+          <input id="photo-file" type="file" accept="image/*" hidden>
+        </div>
+        <p class="hint" id="photo-hint">La foto se reduce y se guarda solo en tu cuenta. Se usará como cara del personaje.</p>
 
-      <span class="field-label">Es</span>
-      <div class="segmented compact" id="gender-seg" role="radiogroup" aria-label="Género"></div>
+        <label class="field-label" for="char-name">Nombre</label>
+        <input class="text-input" id="char-name" type="text" maxlength="40" placeholder="Cómo se llama" autocomplete="off">
 
-      <span class="field-label">Color de pelo</span>
-      <div class="swatches" id="hair-swatches" role="radiogroup" aria-label="Color de pelo"></div>
+        <span class="field-label">Es</span>
+        <div class="segmented compact" id="gender-seg" role="radiogroup" aria-label="Género"></div>
 
-      <span class="field-label">Color de ojos</span>
-      <div class="swatches" id="eyes-swatches" role="radiogroup" aria-label="Color de ojos"></div>
+        <span class="field-label">Color de pelo</span>
+        <div class="swatches" id="hair-swatches" role="radiogroup" aria-label="Color de pelo"></div>
 
-      <p class="setup-error" id="char-error"></p>
-      <div class="sheet-actions">
-        <button class="btn-primary" id="btn-save-char" type="button">Guardar personaje</button>
-        <button class="btn-text danger" id="btn-delete-char" type="button" hidden>Eliminar personaje</button>
+        <span class="field-label">Color de ojos</span>
+        <div class="swatches" id="eyes-swatches" role="radiogroup" aria-label="Color de ojos"></div>
+
+        <span class="field-label">Tono de piel</span>
+        <div class="swatches" id="skin-swatches" role="radiogroup" aria-label="Tono de piel"></div>
+
+        <p class="setup-error" id="char-error"></p>
+        <div class="sheet-actions">
+          <button class="btn-primary" id="btn-save-char" type="button">Guardar personaje</button>
+          <button class="btn-text danger" id="btn-delete-char" type="button" hidden>Eliminar personaje</button>
+        </div>
       </div>
     </div>
   </div>
@@ -192,6 +215,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/avatar.js"></script>
+<script src="js/photo.js"></script>
 <script src="js/data.js"></script>
 <script src="js/events.js"></script>
 <script src="js/engine.js"></script>

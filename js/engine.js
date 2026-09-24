@@ -471,7 +471,7 @@
   }
 
   function makeTribute(c){
-    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, alive: true, allies: [], loverId: null, kills: 0, diedRound: null, cause: null };
+    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, diedRound: null, cause: null };
   }
 
   A.Engine = {

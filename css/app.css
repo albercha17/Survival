@@ -316,3 +316,15 @@ button { -webkit-tap-highlight-color: transparent; }
   text-align: center;
   animation: entry-in .25s ease both;
 }
+
+/* ---------- Fotos ---------- */
+.photo-row { display: flex; gap: 8px; justify-content: center; margin: 6px 0 2px; }
+.photo-row .btn-small { padding: 10px 16px; }
+#photo-hint { text-align: center; margin-top: 8px; }
+.crop-hint { text-align: center; margin: 0 0 10px; }
+.crop-wrap { display: flex; justify-content: center; }
+#crop-canvas { width: 264px; height: 264px; max-width: 100%; touch-action: none; border-radius: 14px; background: #000; cursor: grab; }
+.zoom { width: 100%; margin: 14px 0 4px; accent-color: var(--flame-2); }
+.check-line { display: flex; align-items: center; gap: 10px; margin: 8px 0; color: var(--ink-dim); font-size: .9rem; }
+.check-line input { width: 20px; height: 20px; accent-color: var(--gold); }
+.avatar.photo { object-fit: cover; }

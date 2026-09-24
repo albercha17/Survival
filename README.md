@@ -2,7 +2,7 @@
 
 Simulador de supervivencia por rondas (estilo Juegos del Hambre), pensado para iPhone.
 
-- **Personajes**: nombre, chico/chica, color de pelo y de ojos, con avatar generado.
+- **Personajes**: nombre, chico/chica, pelo, ojos y tono de piel, con avatar dibujado. También puedes subir una foto de alguien real: se recorta con el dedo, admite estilo cómic y se usa como cara del personaje (se guarda reducida, unos KB).
 - **Listas**: guarda un reparto y cárgalo de golpe en futuras partidas.
 - **Narrador**: cada día ocurre una sola cosa; se cuenta con texto que se escribe solo (y voz opcional) y el día pasa automáticamente. Controles: pausa, velocidad 1×/2×/4×, voz y saltar.
 - **Datos**: en Supabase si lo configuras; si no, en este dispositivo (`localStorage`).
@@ -17,6 +17,8 @@ Web estática, sin build. Abre `index.html` o publícala con GitHub Pages.
 4. En **Authentication → Providers → Email**, deja activado el email. Para no depender del correo de confirmación mientras pruebas, desactiva *Confirm email*.
 5. Sube el cambio. Al abrir la web, pulsa **Iniciar sesión → Crear cuenta**.
 
+Si ya tenías el proyecto creado antes de las fotos, ejecuta también las dos últimas líneas de `supabase/schema.sql` (`alter table ... add column skin/photo`) antes de usar la web.
+
 La clave `anon` es pública por diseño: nadie puede leer ni tocar datos ajenos porque las políticas RLS del esquema limitan cada fila a su usuario.
 
 ## Estructura
@@ -25,6 +27,7 @@ La clave `anon` es pública por diseño: nadie puede leer ni tocar datos ajenos 
 index.html        pantallas y hojas (reparto, narrador, victoria, editor, cuenta)
 css/              estilos (scenes.css: animaciones de las escenas)
 js/avatar.js      avatares SVG y paletas de pelo/ojos
+js/photo.js       recorte de fotos, estilo cómic y sugerencia de pelo/piel
 js/data.js        capa de datos (Supabase o localStorage)
 js/events.js      catálogo de eventos absurdos (muertes tontas, amoríos, traiciones)
 js/engine.js      motor de simulación: un evento por día
