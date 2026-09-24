@@ -4,6 +4,7 @@ Simulador de supervivencia por rondas (estilo Juegos del Hambre), pensado para i
 
 - **Personajes**: nombre, chico/chica, pelo, ojos y tono de piel, con avatar dibujado. También puedes subir una foto de alguien real: se recorta con el dedo, admite estilo cómic y se usa como cara del personaje (se guarda reducida, unos KB).
 - **Listas**: guarda un reparto y cárgalo de golpe en futuras partidas.
+- **Acciones variadas**: alianzas, traiciones, robos, sabotajes, regalos, rescates, romances, infidelidades, rumores y bromas, además de muertes absurdas. Los personajes llevan objetos (pistola, cuchillo, botiquín, mapa...) que se pueden robar, regalar, cambiar o romper. Solo una parte de los días acaba en muerte; se ajusta con la duración de la partida (corta, media o larga).
 - **Narrador**: cada día ocurre una sola cosa; se cuenta con texto que se escribe solo (y voz opcional) y el día pasa automáticamente. Controles: pausa, velocidad 1×/2×/4×, voz y saltar.
 - **Datos**: en Supabase si lo configuras; si no, en este dispositivo (`localStorage`).
 
@@ -29,9 +30,10 @@ css/              estilos (scenes.css: animaciones de las escenas)
 js/avatar.js      avatares SVG y paletas de pelo/ojos
 js/photo.js       recorte de fotos, estilo cómic y sugerencia de pelo/piel
 js/data.js        capa de datos (Supabase o localStorage)
-js/events.js      catálogo de eventos absurdos (muertes tontas, amoríos, traiciones)
+js/events.js      catálogo de eventos (muertes absurdas, romances, robos, alianzas...) y objetos
 js/engine.js      motor de simulación: un evento por día
-js/scenes.js      escenas animadas que dibujan cada evento con los avatares
+js/scene-kit.js   librería de coreografía (props, emotes, partículas, cielos)
+js/scenes.js      unas 45 escenas animadas que dibujan cada evento con los avatares
 js/narrator.js    texto que se escribe solo y voz
 js/app.js         interfaz y flujo del juego
 supabase/         esquema SQL

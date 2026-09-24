@@ -248,7 +248,8 @@
 
   var CATEGORY_LABEL = {
     announcement: 'Aviso', death: 'Muerte', alliance: 'Alianza', romance: 'Amorío',
-    item: 'Hallazgo', fight: 'Enfrentamiento', neutral: 'Crónica', victory: 'Victoria'
+    item: 'Hallazgo', fight: 'Enfrentamiento', neutral: 'Crónica', victory: 'Victoria',
+    theft: 'Robo', betrayal: 'Traición', heal: 'Auxilio'
   };
 
   var remainingAlive = 0;
@@ -300,47 +301,105 @@
     return 'group';
   }
 
-  function catalogEvent(m, ctx){
+  function matchSpec(t, spec){
+    if(!spec) return true;
+    if(spec === 'any') return !!t.item;
+    if(spec === 'none') return !t.item;
+    if(spec === 'weapon') return !!(t.item && A.WEAPONS[t.item]);
+    return t.item === spec;
+  }
+  function permutations(m){
+    if(m.length === 1) return [m.slice()];
+    if(m.length === 2) return [[m[0], m[1]], [m[1], m[0]]];
+    var out = [];
+    [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]].forEach(function(p){ out.push([m[p[0]], m[p[1]], m[p[2]]]); });
+    return out;
+  }
+  function validOrders(e, m){
+    return permutations(m).filter(function(o){
+      if(e.req && (!matchSpec(o[0], e.req.a) || (o[1] && !matchSpec(o[1], e.req.b)) || (o[2] && !matchSpec(o[2], e.req.c)))) return false;
+      if(e.cond && !e.cond(o[0], o[1], o[2])) return false;
+      return true;
+    });
+  }
+  function fxParts(e){ return (e.fx || 'none').split('+'); }
+  function lethalPart(e){
+    var parts = fxParts(e);
+    for(var i = 0; i < parts.length; i++){
+      var r = /^(kill|die)_([abc])(_unally)?$/.exec(parts[i]);
+      if(r) return r;
+    }
+    return null;
+  }
+
+  function catalogEvent(m, ctx, wantDeath){
     var rel = relOf(m);
     var free = m.every(isFree);
     var recent = curGame.recent || (curGame.recent = []);
-    var list = A.EVENTS.filter(function(e){
-      return e.n === m.length && (e.rel === 'any' || e.rel === rel) && (!e.free || free);
-    });
-    if(!list.length) return null;
-    var pairs = list.map(function(e){
+    var cands = [];
+    A.EVENTS.forEach(function(e){
+      if(e.n !== m.length) return;
+      if(!(e.rel === 'any' || e.rel === rel)) return;
+      if(e.free && !free) return;
+      var lethal = !!lethalPart(e);
+      if(wantDeath && !lethal) return;
+      if(!wantDeath && lethal && !e.live) return;
+      var ords = validOrders(e, m);
+      if(!ords.length) return;
       var w = e.w || 5;
-      if(/^(kill|die)_/.test(e.fx || '')) w *= ctx.dm;
-      if(recent.indexOf(e.k) !== -1) w *= 0.12;
-      return [w, e];
+      if(!wantDeath && lethal) w *= 0.45;
+      if(recent.indexOf(e.k) !== -1) w *= 0.1;
+      if(/(^|\+)get$/.test(e.fx || '')) w *= 1.6;
+      cands.push([w, { e: e, ords: ords, near: !wantDeath && lethal }]);
     });
-    var e = weightedChoice(pairs);
+    if(!cands.length) return null;
+    var pick = weightedChoice(cands);
+    var e = pick.e;
     recent.push(e.k);
-    if(recent.length > 10) recent.shift();
+    if(recent.length > 14) recent.shift();
 
-    var o = m.length > 1 ? shuffle(m) : m.slice();
+    var o = choice(pick.ords);
     var a = o[0], b = o[1], c = o[2];
-    var fx = e.fx || 'none';
     var ok = true;
-    var lethal = /^(kill|die)_([abc])(_unally)?$/.exec(fx);
-    if(lethal){
-      var victim = o[lethal[2] === 'a' ? 0 : lethal[2] === 'b' ? 1 : 2];
-      if(lethal[3]) removeAlly(a, b);
-      ok = safeKill(victim, e.k, ctx.round);
-      if(ok && lethal[1] === 'kill'){
-        var killer = o.filter(function(t){ return t !== victim; })[0];
-        killer.kills += 1;
+    var x = {};
+    var L = lethalPart(e);
+    fxParts(e).forEach(function(fx){
+      if(/^(kill|die)_/.test(fx)){
+        var r = /^(kill|die)_([abc])(_unally)?$/.exec(fx);
+        var victim = o[r[2] === 'a' ? 0 : r[2] === 'b' ? 1 : 2];
+        if(r[3]) removeAlly(a, b);
+        if(pick.near){ ok = false; return; }
+        ok = safeKill(victim, e.k, ctx.round);
+        if(ok && r[1] === 'kill'){
+          o.filter(function(t){ return t !== victim; })[0].kills += 1;
+        }
+      } else if(fx === 'love') setLovers(a, b);
+      else if(fx === 'breakup'){ a.loverId = null; b.loverId = null; }
+      else if(fx === 'ally') addAlly(a, b);
+      else if(fx === 'ally3'){ addAlly(a, b); addAlly(b, c); addAlly(a, c); }
+      else if(fx === 'recruit'){ addAlly(a, c); addAlly(b, c); }
+      else if(fx === 'unally') removeAlly(a, b);
+      else if(fx === 'unally3'){ removeAlly(a, b); removeAlly(b, c); removeAlly(a, c); }
+      else if(fx === 'cheat'){
+        b.loverId = null;
+        var oldC = c.loverId ? byId(curGame, c.loverId) : null;
+        if(oldC) oldC.loverId = null;
+        setLovers(a, c);
       }
-    } else if(fx === 'love') setLovers(a, b);
-    else if(fx === 'breakup'){ a.loverId = null; b.loverId = null; }
-    else if(fx === 'ally') addAlly(a, b);
-    else if(fx === 'ally3'){ addAlly(a, b); addAlly(b, c); addAlly(a, c); }
-    else if(fx === 'unally') removeAlly(a, b);
-    else if(fx === 'unally3'){ removeAlly(a, b); removeAlly(b, c); removeAlly(a, c); }
-
-    var text = ok ? e.text(a, b, c) : (e.live ? e.live(a, b, c) : a.name + ' lo intenta, pero la arena decide darles un respiro.');
-    var scene = e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o;
-    return ev(ok ? e.type : 'fight', text, scene, e.scene, e.prop);
+      else if(fx === 'get'){ x.item = A.ITEMS[e.it]; a.item = e.it; }
+      else if(fx === 'steal'){ x.item = A.ITEMS[(o[e.n === 3 ? 2 : 1]).item]; var vic = o[e.n === 3 ? 2 : 1]; a.item = vic.item; vic.item = null; }
+      else if(fx === 'give'){ x.item = A.ITEMS[a.item]; b.item = a.item; a.item = null; }
+      else if(fx === 'swap'){ x.item = A.ITEMS[a.item]; x.item2 = A.ITEMS[b.item]; var t = a.item; a.item = b.item; b.item = t; }
+      else if(fx === 'sabotage'){ x.item = A.ITEMS[b.item]; b.item = null; }
+      else if(fx === 'use' || fx === 'lose'){ x.item = A.ITEMS[a.item]; a.item = null; }
+    });
+    var text = ok ? e.text(a, b, c, x) : (e.live ? e.live(a, b, c, x) : a.name + ' lo intenta, pero la arena decide darles un respiro.');
+    var order = e.swap3 && o.length === 3 ? e.swap3.map(function(i){ return o[i]; }) :
+      (e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o);
+    var prop = e.prop || (x.item ? x.item.prop : undefined);
+    var res = ev(ok ? e.type : 'fight', text, order, e.scene, prop);
+    if(x.item2) res.prop2 = x.item2.prop;
+    return res;
   }
 
   function resolveSolo(t, ctx){
@@ -440,9 +499,9 @@
     return ev('fight', choice(TPL.ambush_escape_fallback)(a, b, c), all, 'brawl');
   }
 
-  function resolveGroup(m, ctx){
-    if(A.EVENTS && Math.random() < (m.length === 1 ? 0.75 : 0.7)){
-      var custom = catalogEvent(m, ctx);
+  function resolveGroup(m, ctx, wantDeath){
+    if(A.EVENTS){
+      var custom = catalogEvent(m, ctx, wantDeath) || catalogEvent(m, ctx, !wantDeath);
       if(custom) return custom;
     }
     if(m.length === 1) return resolveSolo(m[0], ctx);
@@ -471,15 +530,32 @@
   }
 
   function makeTribute(c){
-    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, diedRound: null, cause: null };
+    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null };
+  }
+
+  var PACE = { corta: 0.36, media: 0.22, larga: 0.15 };
+  function deathChance(game, alive, isFirst, isFeast){
+    var p = PACE[game.pace] || PACE.media;
+    p *= alive > 16 ? 2.1 : alive > 12 ? 1.7 : alive > 8 ? 1.3 : alive <= 4 ? 1.15 : 1;
+    if(isFirst) p *= 1.3;
+    if(isFeast) p *= 1.4;
+    p += Math.max(0, (game.calm || 0) - 5) * 0.05;
+    if((game.streak || 0) >= 3) p *= 0.4;
+    return Math.min(0.8, p);
   }
 
   A.Engine = {
     label: function(type){ return CATEGORY_LABEL[type] || 'Crónica'; },
 
-    newGame: function(characters){
+    newGame: function(characters, pace){
+      var tributes = characters.map(makeTribute);
+      var loot = ['comida', 'comida', 'cuchillo', 'botiquin', 'paraguas', 'mapa', 'sarten', 'arco', 'pistola', 'ukelele'];
+      tributes.forEach(function(t){ if(Math.random() < 0.4) t.item = choice(loot); });
       return {
-        tributes: characters.map(makeTribute),
+        pace: pace || 'media',
+        calm: 0,
+        streak: 0,
+        tributes: tributes,
         round: 0,
         log: [],
         winnerId: null,
@@ -518,12 +594,11 @@
         entry = ev('death', choice(TPL.final_duel)(dom[0], dom[1]), dom, choice(['shoot', 'brawl', 'stab']));
       } else {
         var ctx = { round: round, dm: deathMultiplier(alive.length, isFirst, isFeast) };
-        for(var attempt = 0; attempt < 3; attempt++){
-          entry = resolveGroup(pickGroup(game, alive, isFirst), ctx);
-          var quiet = entry.type === 'neutral' || entry.type === 'item';
-          if(!(quiet && alive.length > 6 && Math.random() < 0.6)) break;
-        }
+        var wantDeath = Math.random() < deathChance(game, alive.length, isFirst, isFeast);
+        entry = resolveGroup(pickGroup(game, alive, isFirst), ctx, wantDeath);
       }
+      game.calm = currentDeaths.length ? 0 : (game.calm || 0) + 1;
+      game.streak = currentDeaths.length ? (game.streak || 0) + 1 : 0;
       if(isFirst) entry.text = 'Suena el gong. ' + entry.text;
       if(isFeast) entry.text = choice(TPL.feast_announce) + ' ' + entry.text;
       entry.round = round;
