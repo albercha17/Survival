@@ -131,7 +131,7 @@
     try {
       var actors = (entry.ids || []).map(byId).filter(Boolean);
       if(entry.scene === 'teamintro' || (entry.scene === 'teamvictory' && actors.length > 3)){
-        teamLineup(el, actors, entry, isStatic || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches));
+        teamLineup(el, actors, entry, isStatic);
         return;
       }
       baseRender(el, entry, byId, isStatic);

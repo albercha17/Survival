@@ -865,8 +865,7 @@
       var key = entry.scene || DEFAULT[entry.type] || 'explore';
       var actors = (entry.ids || []).map(byId).filter(Boolean);
       if(!actors.length){ el.innerHTML = ''; return; }
-      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      isStatic = !!isStatic || reduce;
+      isStatic = !!isStatic;
       if(key === 'lineup' || actors.length > 3){ lineup(el, actors, isStatic); return; }
       if(key === 'victory') actors = actors.slice(0, 2);
       if(!SC[key]) key = 'explore';
@@ -874,6 +873,9 @@
       var S = new Stage(el, entry, actors, isStatic);
       S.build();
       SC[key](S, { entry: entry, prop: entry.prop, prop2: entry.prop2 });
+      if(S.hasDeath && key !== 'balloon' && !S.scene.querySelector('.ghostf')){
+        S.dead.forEach(function(d, i){ if(d) dieBy(S, i, 'fall', 2400, S.X[i] > S.W / 2 ? 1 : -1); });
+      }
       if(isStatic) S.finish();
     }
   };

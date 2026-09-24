@@ -519,7 +519,7 @@
       (e.swap && o.length > 1 ? [b, a, c].filter(Boolean) : o);
     if(x.baby) order = [order[0], x.baby, order[1]];
     var prop = e.prop || (x.item ? x.item.prop : undefined);
-    var res = ev(ok ? e.type : 'fight', text, order, e.scene, prop);
+    var res = ev(ok ? e.type : 'fight', text, order, e.scenes ? choice(e.scenes) : e.scene, prop);
     if(x.item2) res.prop2 = x.item2.prop;
     return res;
   }
