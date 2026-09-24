@@ -477,6 +477,11 @@
     saved.game.log.forEach(function(e){ (e.deaths || []).forEach(function(id){ set[id] = true; }); });
     return set;
   }
+  function revealedBabies(){
+    var set = {};
+    saved.game.log.forEach(function(e){ if(e.babyId) set[e.babyId] = true; });
+    return set;
+  }
   function lastLogged(){
     var l = saved.game.log;
     return l.length ? l[l.length - 1] : null;
@@ -488,8 +493,11 @@
     var round = last ? last.round : 0;
     $('day-eyebrow').textContent = round === 0 ? 'Prólogo' : 'Día';
     $('day-number').textContent = round === 0 ? '·' : round;
-    var dead = Object.keys(revealedDead()).length;
-    $('alive-pill').textContent = (g.tributes.length - dead) + ' de ' + g.tributes.length + ' vivos';
+    var deadMap = revealedDead();
+    var fighters = g.tributes.filter(function(t){ return !t.baby; });
+    var dead = fighters.filter(function(t){ return deadMap[t.id]; }).length;
+    var kids = Object.keys(revealedBabies()).length;
+    $('alive-pill').textContent = (fighters.length - dead) + ' de ' + fighters.length + ' vivos' + (kids ? ' · ' + kids + (kids === 1 ? ' bebé' : ' bebés') : '');
   }
 
   function renderStage(entry, isStatic){
@@ -626,7 +634,11 @@
     $('victory-name').textContent = w ? w.name : '—';
     $('victory-days').textContent = g.round;
     $('victory-kills').textContent = w ? w.kills : 0;
-    var fallen = g.tributes.filter(function(t){ return !t.alive; }).sort(function(a, b){ return (b.diedRound || 0) - (a.diedRound || 0); });
+    var vic = g.log.filter(function(e){ return e.type === 'victory'; })[0];
+    var kid = vic && vic.ids && vic.ids[1] ? byId(vic.ids[1]) : null;
+    $('victory-family').hidden = !kid;
+    if(kid) $('victory-family').textContent = 'Se lleva a casa a ' + kid.name + ', ' + (kid.gender === 'chica' ? 'la bebé' : 'el bebé') + '.';
+    var fallen = g.tributes.filter(function(t){ return !t.alive && !t.baby; }).sort(function(a, b){ return (b.diedRound || 0) - (a.diedRound || 0); });
     $('memorial-list').innerHTML = fallen.map(function(t){
       return '<div class="memorial-row"><span class="who">' + A.avatar(t, 30) + '<span class="name">' + esc(t.name) + '</span></span><span class="when">Día ' + t.diedRound + '</span></div>';
     }).join('');
@@ -643,7 +655,7 @@
   }
 
   function replaySameCast(){
-    var chars = saved.game.tributes.map(function(t){
+    var chars = saved.game.tributes.filter(function(t){ return !t.baby; }).map(function(t){
       return { id: t.id, name: t.name, gender: t.gender, hair: t.hair, eyes: t.eyes, skin: t.skin, photo: t.photo };
     });
     beginGame(chars);
@@ -651,8 +663,10 @@
 
   function renderRoster(){
     var dead = revealedDead();
+    var babies = revealedBabies();
     var g = saved.game;
-    var list = g.tributes.slice().sort(function(a, b){
+    var list = g.tributes.filter(function(t){ return !t.baby || babies[t.id]; }).sort(function(a, b){
+      if(!!a.baby !== !!b.baby) return a.baby ? 1 : -1;
       var da = !!dead[a.id], db = !!dead[b.id];
       if(da !== db) return da ? 1 : -1;
       if(!da) return (b.kills - a.kills) || a.name.localeCompare(b.name);
@@ -661,6 +675,11 @@
     $('roster-list').innerHTML = list.map(function(t){
       var isDead = !!dead[t.id];
       var chips = [];
+      if(t.baby){
+        var pn = (t.parents || []).map(byId).filter(Boolean).map(function(p){ return p.name; });
+        chips.push('<span class="chip chip-baby">Bebé de ' + esc(pn.join(' y ')) + '</span>');
+        chips.push('<span class="chip chip-baby">Protegido por la arena</span>');
+      }
       if(t.kills > 0) chips.push('<span class="chip chip-kills">Bajas: ' + t.kills + '</span>');
       if(t.item && A.ITEMS[t.item]) chips.push('<span class="chip chip-item">Lleva ' + esc(A.ITEMS[t.item].short) + '</span>');
       var allies = t.allies.map(byId).filter(function(x){ return x && !dead[x.id]; });
@@ -671,7 +690,7 @@
       }
       return '<div class="roster-row' + (isDead ? ' is-dead' : '') + '"><div class="roster-main">' +
         A.avatar(t, 32) + '<span class="roster-name">' + esc(t.name) + '</span>' +
-        '<span class="roster-status">' + (isDead ? 'Fuera de juego · Día ' + t.diedRound : 'En la arena') + '</span></div>' +
+        '<span class="roster-status">' + (isDead ? 'Fuera de juego · Día ' + t.diedRound : (t.baby ? 'Bebé' : 'En la arena')) + '</span></div>' +
         (chips.length && !isDead ? '<div class="roster-chips">' + chips.join('') + '</div>' : '') + '</div>';
     }).join('');
   }

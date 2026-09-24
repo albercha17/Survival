@@ -132,7 +132,7 @@
     var h = '<div class="cam"><div class="bgl"></div><div class="lyr back"></div>';
     this.actors.forEach(function(t, i){
       var photo = A.validPhoto(t.photo);
-      h += '<div class="actor a-' + i + '" style="left:' + (st.X[i] - st.SZ / 2) + 'px">' +
+      h += '<div class="actor a-' + i + (t.baby ? ' baby' : '') + '" style="left:' + (st.X[i] - st.SZ / 2) + 'px">' +
         '<div class="shadow"></div>' +
         '<div class="ai"><div class="br">' + A.avatar(t, 84) + A.xeyesFor(photo) + '</div></div>' +
         '<span class="who">' + esc(t.name) + '</span></div>';
@@ -230,7 +230,8 @@
   };
   SP.itemSize = function(name){
     return { gun: [40, 26], knife: [14, 40], pan: [56, 28], bow: [26, 44], medkit: [38, 30], umbrella: [46, 46], map: [40, 32],
-             bag: [36, 42], ukulele: [26, 50], chest: [48, 38], flowers: [34, 40], sock: [26, 34], rock: [44, 34], crate: [56, 78] }[name] || [36, 36];
+             bag: [36, 42], ukulele: [26, 50], chest: [48, 38], flowers: [34, 40], sock: [26, 34], rock: [44, 34], crate: [56, 78],
+             ring: [28, 28], dice: [26, 26], letter: [32, 24], apple: [28, 30], babybottle: [18, 40] }[name] || [36, 36];
   };
 
   /* ----- locomoción y cuerpo ----- */

@@ -127,3 +127,17 @@
 /* estático / movimiento reducido: sin bucles ambientales */
 .scene.static *, .scene.static { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .scene *, .scene { animation: none !important; } }
+
+/* bebés */
+.scene .actor.baby .br { transform: scale(.72); transform-origin: 50% 100%; }
+.scene .actor.baby .who { margin-top: 2px; }
+
+/* escenas nuevas */
+.scene .water { position: absolute; left: 0; right: 0; bottom: 20px; z-index: 5; pointer-events: none;
+  background: linear-gradient(180deg, rgba(90,170,230,.85), rgba(40,110,190,.95)); border-top: 3px solid rgba(255,255,255,.4); }
+.scene .water::before { content: ''; position: absolute; left: 0; right: 0; top: -4px; height: 8px;
+  background: radial-gradient(circle at 6px 6px, rgba(255,255,255,.55) 3px, transparent 4px) 0 0 / 14px 8px repeat-x; }
+.scene .sign { position: absolute; z-index: 9; width: 88px; padding: 2px 0; text-align: center; font-size: .56rem; font-weight: 700; letter-spacing: .04em; color: #3b2410; background: #f6e2a8; border: 2px solid #8a5a2a; border-radius: 4px; pointer-events: none; }
+.scene .wave-ring { position: absolute; bottom: 70px; width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,.8); opacity: 0; pointer-events: none; }
+.scene .bigwave { position: absolute; left: 0; bottom: 20px; width: 100%; height: 120px; z-index: 7; pointer-events: none;
+  background: linear-gradient(180deg, rgba(150,210,255,.9), rgba(50,120,200,.95)); border-radius: 60% 60% 0 0 / 40% 40% 0 0; }

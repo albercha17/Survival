@@ -53,6 +53,23 @@
         '<rect width="64" height="64" fill="#1b2015"/>' +
         '<image href="' + c.photo + '" x="0" y="0" width="64" height="64" preserveAspectRatio="xMidYMid slice"/></svg>';
     }
+    if(c.baby){
+      var bh = A.hairOf(c.hair).hex, be = A.eyesOf(c.eyes).hex, bs = A.skinOf(c.skin);
+      var bp = [];
+      bp.push('<rect width="64" height="64" fill="#1b2015"/>');
+      bp.push('<path d="M6 66 Q8 46 32 46 Q56 46 58 66 Z" fill="#f2dc9a"/>');
+      bp.push('<path d="M14 58 Q32 50 50 58" stroke="#e0c476" stroke-width="2" fill="none" stroke-linecap="round"/>');
+      bp.push('<circle cx="32" cy="30" r="19" fill="' + bs.hex + '"/>');
+      bp.push('<circle cx="18.5" cy="32" r="3.2" fill="' + bs.hex + '"/><circle cx="45.5" cy="32" r="3.2" fill="' + bs.hex + '"/>');
+      bp.push('<path d="M26 12.5 Q28 4 33 8 Q32 10.5 35 10 Q34 6 38 8 Q36 13 30 13.5 Q27 14 26 12.5Z" fill="' + bh + '"/>');
+      bp.push('<circle cx="24.5" cy="31.5" r="4.2" fill="#fff"/><circle cx="39.5" cy="31.5" r="4.2" fill="#fff"/>');
+      bp.push('<circle cx="24.8" cy="32" r="3" fill="' + be + '"/><circle cx="39.8" cy="32" r="3" fill="' + be + '"/>');
+      bp.push('<circle cx="24.8" cy="32" r="1.3" fill="#111"/><circle cx="39.8" cy="32" r="1.3" fill="#111"/>');
+      bp.push('<circle cx="25.9" cy="30.8" r="1" fill="#fff"/><circle cx="40.9" cy="30.8" r="1" fill="#fff"/>');
+      bp.push('<circle cx="19.5" cy="38" r="3" fill="#ff9aa8" fill-opacity=".55"/><circle cx="44.5" cy="38" r="3" fill="#ff9aa8" fill-opacity=".55"/>');
+      bp.push('<circle cx="32" cy="41" r="3.6" fill="#7ec8ff"/><circle cx="32" cy="41" r="1.5" fill="#dff2ff"/>');
+      return '<svg class="avatar baby" viewBox="0 0 64 64" width="' + s0 + '" height="' + s0 + '" role="img" aria-label="' + label + '">' + bp.join('') + '</svg>';
+    }
     var hair = A.hairOf(c.hair).hex;
     var eyes = A.eyesOf(c.eyes).hex;
     var girl = c.gender === 'chica';
