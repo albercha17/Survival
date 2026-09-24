@@ -1,75 +1,1353 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Survival</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="La Arena">
 <style>
-    * {
-        box-sizing: border-box;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-
-    body {
-        margin: 0;
-        height: 100vh;
-        background: radial-gradient(circle at top, #2a2a2a, #0a0a0a);
-        color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .app {
-        width: 100%;
-        max-width: 390px; /* iPhone 14 Pro aprox */
-        padding: 32px 20px;
-        text-align: center;
-    }
-
-    h1 {
-        font-size: 3.2rem;
-        letter-spacing: 6px;
-        margin-bottom: 80px;
-        font-weight: 700;
-    }
-
-    .mode-btn {
-        width: 100%;
-        padding: 20px;
-        font-size: 1.4rem;
-        letter-spacing: 2px;
-        background: linear-gradient(#1e1e1e, #141414);
-        color: #fff;
-        border: 2px solid #555;
-        border-radius: 18px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-
-    .mode-btn:active {
-        transform: scale(0.97);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.6);
-    }
-
-    /* iOS safe-area support */
-    @supports (padding: env(safe-area-inset-bottom)) {
-        .app {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-    }
+  html, body { margin: 0; height: 100%; background: #0b0d09; }
+  body { font-size: 14px; -webkit-text-size-adjust: 100%; }
+  [hidden] { display: none !important; }
 </style>
+<title>La Arena</title>
 </head>
-
 <body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<style>
+  :root {
+    --bg: #0b0d09;
+    --bg-1: #12160f;
+    --bg-2: #181d13;
+    --line: #262c1c;
+    --line-soft: #1d2216;
+    --ink: #ece7d6;
+    --ink-dim: #a2a38c;
+    --ink-faint: #6d6f5c;
+    --flame-1: #e2571f;
+    --flame-2: #f4a13a;
+    --gold: #cda23f;
+    --blood: #a53a34;
+    --alliance: #5b9b74;
+    --romance: #cf7590;
+    --shadow-soft: 0 20px 50px -24px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
 
-<div class="app">
-    <h1>SURVIVAL</h1>
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); }
 
-    <button class="mode-btn" onclick="location.href='modos/clasico.html'">
-        CLÁSICO
-    </button>
+  #app-root {
+    font-family: 'Karla', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100%;
+    position: relative;
+    isolation: isolate;
+  }
+
+  #app-root::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% 100%, rgba(226,87,31,.16), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(205,162,63,.08), transparent 60%),
+      var(--bg);
+  }
+
+  #embers { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .ember {
+    position: absolute;
+    bottom: -10px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--flame-2);
+    opacity: 0;
+    box-shadow: 0 0 6px 1px rgba(244,161,58,.7);
+    animation: ember-rise linear infinite;
+  }
+  @keyframes ember-rise {
+    0% { transform: translate(0,0); opacity: 0; }
+    8% { opacity: .75; }
+    90% { opacity: .35; }
+    100% { transform: translate(var(--drift,12px), -115vh); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #embers { display: none; }
+    * { animation-duration: .001s !important; animation-iteration-count: 1 !important; }
+  }
+
+  .screen {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .screen[hidden] { display: none; }
+
+  .topbar {
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .content {
+    flex: 1 1 auto;
+    padding: 4px 20px 24px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bottombar {
+    position: sticky;
+    bottom: 0;
+    padding: 14px 20px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    background: linear-gradient(to top, var(--bg) 55%, rgba(11,13,9,0));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ---------- Emblem & type ---------- */
+  .emblem { display: block; margin: 0 auto; }
+  .eyebrow {
+    font-family: 'Karla', sans-serif;
+    font-size: .72rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    font-weight: 700;
+  }
+  .title-hero {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 2.6rem;
+    text-align: center;
+    letter-spacing: .04em;
+    margin: 6px 0 4px;
+    background: linear-gradient(120deg, var(--flame-2), var(--gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-wrap: balance;
+  }
+  .tagline {
+    text-align: center;
+    color: var(--ink-dim);
+    font-style: italic;
+    font-size: .92rem;
+    margin: 0 auto 22px;
+    max-width: 30ch;
+  }
+
+  /* ---------- Setup screen ---------- */
+  .setup-card {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 18px 16px;
+    box-shadow: var(--shadow-soft);
+  }
+  .setup-card h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    letter-spacing: .03em;
+    margin: 0 0 2px;
+    font-weight: 600;
+  }
+  .setup-card .sub {
+    color: var(--ink-dim);
+    font-size: .85rem;
+    margin: 0 0 16px;
+  }
+  #tribute-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tribute-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tribute-row .n {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    font-size: .78rem;
+    width: 1.4em;
+    text-align: right;
+    flex: none;
+  }
+  .tribute-input {
+    flex: 1 1 auto;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: .95rem;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .tribute-input:focus {
+    outline: none;
+    border-color: var(--flame-2);
+  }
+  .btn-remove {
+    flex: none;
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    color: var(--ink-faint);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .btn-remove:hover { color: var(--blood); border-color: var(--blood); }
+
+  .btn-add {
+    width: 100%;
+    padding: 11px;
+    border-radius: 10px;
+    border: 1px dashed var(--line);
+    background: transparent;
+    color: var(--ink-dim);
+    font-family: inherit;
+    font-size: .9rem;
+    cursor: pointer;
+  }
+  .btn-add:hover { border-color: var(--gold); color: var(--gold); }
+
+  .setup-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 14px;
+    font-size: .78rem;
+    color: var(--ink-faint);
+  }
+  .setup-error {
+    color: var(--blood);
+    font-size: .82rem;
+    text-align: center;
+    margin: 0 0 8px;
+    min-height: 1.2em;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn-primary {
+    width: 100%;
+    padding: 15px;
+    border-radius: 13px;
+    border: none;
+    background: linear-gradient(120deg, var(--flame-1), var(--flame-2));
+    color: #1a0d04;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: .03em;
+    cursor: pointer;
+    box-shadow: 0 12px 26px -12px rgba(226,87,31,.55);
+  }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: .5; box-shadow: none; cursor: default; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 13px;
+    border: 1px solid var(--gold);
+    background: rgba(205,162,63,.08);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: .92rem;
+    cursor: pointer;
+  }
+
+  .btn-text {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    color: var(--ink-dim);
+    font-family: inherit;
+    font-size: .85rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg-1);
+    color: var(--ink-dim);
+    font-size: 1.05rem;
+    cursor: pointer;
+    flex: none;
+  }
+  .icon-btn.ghost { color: var(--ink-faint); }
+  .topbar-actions { display: flex; gap: 8px; }
+
+  /* ---------- Game topbar ---------- */
+  .game-topbar { align-items: center; }
+  .day-block { display: flex; flex-direction: column; line-height: 1; }
+  .day-eyebrow {
+    font-size: .65rem;
+    letter-spacing: .18em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+  }
+  .day-number {
+    font-family: 'Cinzel', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .alive-pill {
+    font-size: .78rem;
+    color: var(--ink-dim);
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .confirm-bar {
+    background: var(--bg-1);
+    border: 1px solid var(--blood);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    font-size: .85rem;
+  }
+  .confirm-bar p { margin: 0 0 10px; color: var(--ink); }
+  .confirm-bar .row { display: flex; gap: 8px; }
+  .confirm-bar button {
+    flex: 1;
+    padding: 9px;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .confirm-bar .yes { border: none; background: var(--blood); color: #fff; }
+  .confirm-bar .no { border: 1px solid var(--line); background: transparent; color: var(--ink-dim); }
+
+  /* ---------- Log ---------- */
+  #log { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
+  .log-entry {
+    border-left: 3px solid var(--c, var(--ink-faint));
+    background: var(--bg-1);
+    border-radius: 0 12px 12px 0;
+    padding: 10px 14px;
+    animation: entry-in .45s ease both;
+  }
+  .log-entry.type-announcement {
+    border-left-color: var(--gold);
+    background: linear-gradient(90deg, rgba(205,162,63,.14), var(--bg-1) 60%);
+  }
+  .log-entry.type-death { border-left-color: var(--blood); }
+  .log-entry.type-alliance { border-left-color: var(--alliance); }
+  .log-entry.type-romance { border-left-color: var(--romance); }
+  .log-entry.type-item { border-left-color: var(--gold); }
+  .log-entry.type-fight { border-left-color: var(--flame-1); }
+  .log-entry.type-neutral { border-left-color: var(--ink-faint); }
+  .log-entry.type-victory {
+    border-left-color: var(--gold);
+    background: linear-gradient(90deg, rgba(226,87,31,.18), var(--bg-1) 70%);
+  }
+  @keyframes entry-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .log-meta {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 3px;
+  }
+  .log-day {
+    font-size: .68rem;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .log-tag {
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .log-tag.type-announcement, .log-tag.type-victory { color: var(--gold); }
+  .log-tag.type-death { color: var(--blood); }
+  .log-tag.type-alliance { color: var(--alliance); }
+  .log-tag.type-romance { color: var(--romance); }
+  .log-tag.type-item { color: var(--gold); }
+  .log-tag.type-fight { color: var(--flame-2); }
+  .log-tag.type-neutral { color: var(--ink-faint); }
+  .log-text { margin: 0; font-size: .93rem; line-height: 1.45; color: var(--ink); }
+
+  /* ---------- Roster sheet ---------- */
+  .sheet-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 40;
+  }
+  .sheet {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    bottom: 0;
+    width: 100%; max-width: 480px;
+    max-height: 78vh;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -20px 50px -20px rgba(0,0,0,.8);
+    animation: sheet-up .28s ease both;
+  }
+  @keyframes sheet-up { from { transform: translateX(-50%) translateY(100%); } to { transform: translateX(-50%) translateY(0); } }
+  .sheet-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .sheet-head h3 { font-family: 'Cinzel', serif; margin: 0; font-size: 1rem; }
+  .sheet-body { overflow-y: auto; padding: 10px 18px 24px; -webkit-overflow-scrolling: touch; }
+
+  .roster-row {
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .roster-row:last-child { border-bottom: none; }
+  .roster-main { display: flex; align-items: center; gap: 9px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .status-dot.alive { background: var(--gold); box-shadow: 0 0 6px 1px rgba(205,162,63,.6); }
+  .status-dot.dead { background: var(--ink-faint); }
+  .roster-name { font-weight: 700; font-size: .93rem; }
+  .roster-row.is-dead .roster-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+  .roster-status { margin-left: auto; font-size: .74rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .roster-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding-left: 17px; }
+  .chip { font-size: .7rem; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-dim); }
+  .chip-kills { border-color: var(--blood); color: var(--blood); }
+  .chip-ally { border-color: var(--alliance); color: var(--alliance); }
+  .chip-love { border-color: var(--romance); color: var(--romance); }
+
+  /* ---------- Victory ---------- */
+  .victory-card {
+    text-align: center;
+    padding: 8px 0 20px;
+  }
+  .victory-eyebrow {
+    color: var(--gold);
+    font-size: .75rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .victory-name {
+    font-family: 'Cinzel', serif;
+    font-size: 2.1rem;
+    font-weight: 700;
+    margin: 8px 0 14px;
+    text-wrap: balance;
+    background: linear-gradient(120deg, var(--flame-2), var(--gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .victory-stats {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin: 0 0 6px;
+  }
+  .victory-stats .stat { text-align: center; }
+  .victory-stats .stat b {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .victory-stats .stat span { font-size: .72rem; color: var(--ink-faint); letter-spacing: .06em; text-transform: uppercase; }
+
+  .memorial-title {
+    font-family: 'Cinzel', serif;
+    font-size: .85rem;
+    letter-spacing: .06em;
+    color: var(--ink-dim);
+    text-align: center;
+    margin: 22px 0 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .memorial-title::before, .memorial-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--line);
+  }
+  .memorial-row {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: .85rem;
+  }
+  .memorial-row .name { color: var(--ink); }
+  .memorial-row .when { color: var(--ink-faint); font-variant-numeric: tabular-nums; flex: none; }
+
+  :focus-visible { outline: 2px solid var(--flame-2); outline-offset: 2px; }
+</style>
+
+<div id="app-root">
+  <div id="embers"></div>
+
+  <section class="screen" id="screen-setup">
+    <div class="topbar">
+      <svg class="emblem" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" fill="none" stroke="#cda23f" stroke-width="1.4" opacity=".55"/>
+        <path d="M24 6C18 14 14 20 14 28C14 36 18.5 42 24 42C29.5 42 34 36 34 28C34 20 30 14 24 6Z" fill="#c9491f"/>
+        <path d="M24 15C21 20 19 24 19 29C19 34 21.3 38 24 38C26.7 38 29 34 29 29C29 24 27 20 24 15Z" fill="#f4a13a"/>
+      </svg>
+    </div>
+    <div class="content">
+      <p class="eyebrow">Simulador de Arena</p>
+      <h1 class="title-hero">La Arena</h1>
+      <p class="tagline">Solo uno caminará fuera de la arena.</p>
+
+      <div class="setup-card">
+        <h2>Tributos</h2>
+        <p class="sub">Escribe quién entra en la arena. Alianzas, traiciones y amoríos surgirán solos, ronda a ronda.</p>
+        <div id="tribute-list"></div>
+        <button class="btn-add" id="btn-add-tribute" type="button">+ Añadir tributo</button>
+        <div class="setup-meta">
+          <span id="tribute-count">0 tributos</span>
+          <span>Mínimo 2 · recomendado 8+</span>
+        </div>
+      </div>
+      <p class="setup-error" id="setup-error"></p>
+    </div>
+    <div class="bottombar">
+      <button class="btn-primary" id="btn-start" type="button">Comenzar los Juegos</button>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-game" hidden>
+    <div class="topbar game-topbar">
+      <div class="day-block">
+        <span class="day-eyebrow">Día</span>
+        <span class="day-number" id="day-number">1</span>
+      </div>
+      <span class="alive-pill" id="alive-pill">— con vida</span>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btn-roster" type="button" aria-label="Ver tributos">☰</button>
+        <button class="icon-btn ghost" id="btn-reset-game" type="button" aria-label="Reiniciar partida">↺</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="confirm-bar" id="confirm-reset-bar" hidden>
+        <p>¿Reiniciar? Se perderá el progreso de esta partida.</p>
+        <div class="row">
+          <button class="yes" id="btn-confirm-reset" type="button">Sí, reiniciar</button>
+          <button class="no" id="btn-cancel-reset" type="button">Cancelar</button>
+        </div>
+      </div>
+      <div id="log"></div>
+    </div>
+    <div class="bottombar">
+      <button class="btn-primary" id="btn-next-round" type="button">Siguiente Ronda →</button>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-victory" hidden>
+    <div class="topbar">
+      <svg class="emblem" width="40" height="40" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="21" fill="none" stroke="#cda23f" stroke-width="1.4" opacity=".55"/>
+        <path d="M24 6C18 14 14 20 14 28C14 36 18.5 42 24 42C29.5 42 34 36 34 28C34 20 30 14 24 6Z" fill="#c9491f"/>
+        <path d="M24 15C21 20 19 24 19 29C19 34 21.3 38 24 38C26.7 38 29 34 29 29C29 24 27 20 24 15Z" fill="#f4a13a"/>
+      </svg>
+    </div>
+    <div class="content">
+      <div class="victory-card">
+        <p class="victory-eyebrow">Superviviente de la arena</p>
+        <h2 class="victory-name" id="victory-name">—</h2>
+        <div class="victory-stats">
+          <div class="stat"><b id="victory-days">0</b><span>Días</span></div>
+          <div class="stat"><b id="victory-kills">0</b><span>Bajas</span></div>
+        </div>
+      </div>
+      <p class="memorial-title">En memoria de los caídos</p>
+      <div id="memorial-list"></div>
+    </div>
+    <div class="bottombar">
+      <button class="btn-secondary" id="btn-replay-same" type="button">Repetir con el mismo reparto</button>
+      <button class="btn-text" id="btn-edit-tributes" type="button">Editar tributos</button>
+    </div>
+  </section>
+
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <div class="sheet" id="roster-sheet" hidden>
+    <div class="sheet-head">
+      <h3>Tributos</h3>
+      <button class="icon-btn ghost" id="btn-close-roster" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="sheet-body" id="roster-list"></div>
+  </div>
 </div>
 
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = 'la-arena-state-v1';
+  var MIN_TRIBUTES = 2;
+  var MAX_TRIBUTES = 24;
+  var EXAMPLE_NAMES = ['Aria Vance','Kade Thorne','Mira Solis','Dax Ferro','Lena Okafor','Rowan Blake','Sable Cruz','Tobin Reyes'];
+
+  var state = null;
+  var remainingAlive = 0;
+  var renderedLogCount = 0;
+
+  function rand(n){ return Math.floor(Math.random()*n); }
+  function choice(arr){ return arr[rand(arr.length)]; }
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=rand(i+1); var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+  function weightedChoice(pairs){
+    var total = 0;
+    for(var i=0;i<pairs.length;i++) total += pairs[i][0];
+    var r = Math.random()*total;
+    for(var k=0;k<pairs.length;k++){
+      if(r < pairs[k][0]) return pairs[k][1];
+      r -= pairs[k][0];
+    }
+    return pairs[pairs.length-1][1];
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  var TPL = {
+    explore: [
+      function(a){ return a+' avanza entre la maleza, memorizando cada sonido de la arena.'; },
+      function(a){ return a+' pasa la jornada oculto en lo alto de un árbol, vigilando el terreno.'; },
+      function(a){ return a+' recorre el perímetro buscando una salida que no existe.'; },
+      function(a){ return a+' raciona el agua que le queda y sigue adelante en silencio.'; },
+      function(a){ return a+' levanta un refugio improvisado antes de que caiga la noche.'; },
+      function(a){ return a+' decide alejarse de la Cornucopia y busca refugio en las colinas.'; },
+      function(a){ return a+' camina en círculos durante horas, sin lograr orientarse.'; },
+      function(a){ return a+' enciende una hoguera pequeña, con cuidado de no llamar la atención.'; }
+    ],
+    find_item: [
+      function(a){ return a+' encuentra un cuchillo oxidado entre las rocas.'; },
+      function(a){ return 'Un paracaídas plateado cae del cielo: los patrocinadores no se olvidan de '+a+'.'; },
+      function(a){ return a+' descubre una cantimplora medio llena junto a un tronco caído.'; },
+      function(a){ return a+' recupera una mochila abandonada con provisiones para varios días.'; },
+      function(a){ return a+' da con un botiquín improvisado y aprovecha para curar sus heridas.'; },
+      function(a){ return 'Los patrocinadores premian la estrategia de '+a+' con un pequeño envío de comida.'; }
+    ],
+    hide: [
+      function(a){ return a+' se esconde en una cueva y contiene la respiración al oír pasos cercanos.'; },
+      function(a){ return a+' se cubre de barro y hojas para desaparecer entre la maleza.'; },
+      function(a){ return a+' pasa la noche entera inmóvil, esperando que el peligro se aleje.'; },
+      function(a){ return a+' se refugia entre las rocas altas, lejos de cualquier sendero.'; }
+    ],
+    injured: [
+      function(a){ return a+' sufre una caída por un barranco, pero logra seguir adelante.'; },
+      function(a){ return 'Unas zarzas dejan a '+a+' con heridas superficiales, aunque sigue con vida.'; },
+      function(a){ return a+' cae en una trampa improvisada, pero consigue liberarse a tiempo.'; },
+      function(a){ return a+' pasa la noche con fiebre, pero al amanecer sigue en pie.'; }
+    ],
+    death_accident: [
+      function(a){ return a+' no logra esquivar una trampa oculta entre la hojarasca y muere en el acto.'; },
+      function(a){ return a+' cae por un risco durante la noche, en busca de agua.'; },
+      function(a){ return 'Una criatura de la arena sorprende a '+a+', que no llega a reaccionar a tiempo.'; },
+      function(a){ return a+' bebe de un manantial contaminado y no vuelve a levantarse.'; },
+      function(a){ return 'El suelo cede bajo '+a+', que desaparece en un pozo oculto entre la maleza.'; },
+      function(a){ return 'Un enjambre furioso alcanza a '+a+' antes de que pueda ponerse a salvo.'; }
+    ],
+    death_illness: [
+      function(a){ return 'La fiebre que arrastraba '+a+' desde hace días resulta mortal.'; },
+      function(a){ return a+' sucumbe a una infección que nadie llegó a tratar.'; },
+      function(a){ return 'El frío de la noche termina con las fuerzas que le quedaban a '+a+'.'; },
+      function(a){ return a+' colapsa de agotamiento y no vuelve a despertar.'; }
+    ],
+    meet_alliance: [
+      function(a,b){ return a+' y '+b+' deciden unir fuerzas tras cruzarse junto al río.'; },
+      function(a,b){ return 'Con más posibilidades juntos que por separado, '+a+' y '+b+' sellan una alianza.'; },
+      function(a,b){ return a+' propone una tregua a '+b+', que acepta compartir camino.'; },
+      function(a,b){ return a+' y '+b+' deciden vigilarse las espaldas mutuamente, al menos por ahora.'; }
+    ],
+    meet_romance: [
+      function(a,b){ return 'Algo cambia entre '+a+' y '+b+' cuando comparten el último trozo de pan.'; },
+      function(a,b){ return 'En medio del peligro, '+a+' y '+b+' encuentran un momento de calma el uno junto al otro.'; },
+      function(a,b){ return a+' y '+b+' se sorprenden buscando la compañía del otro más de lo esperado.'; },
+      function(a,b){ return 'Una mirada entre '+a+' y '+b+' dice más de lo que ninguno se atreve a admitir.'; }
+    ],
+    ignore: [
+      function(a,b){ return a+' y '+b+' se cruzan de lejos y deciden que no vale la pena el riesgo.'; },
+      function(a,b){ return a+' avista a '+b+' a lo lejos, pero prefiere no arriesgarse y sigue su camino.'; },
+      function(a,b){ return a+' y '+b+' se estudian desde la distancia antes de alejarse cada uno por su lado.'; },
+      function(a,b){ return a+' podría atacar a '+b+', pero decide que no merece la pena gastar energía.'; }
+    ],
+    fight_death: [
+      function(w,l){ return w+' y '+l+' se enfrentan cuerpo a cuerpo; solo '+w+' sale con vida.'; },
+      function(w,l){ return 'Tras un choque breve y violento, '+w+' logra imponerse sobre '+l+'.'; },
+      function(w,l){ return w+' sorprende a '+l+' por la espalda y no le da ninguna oportunidad.'; },
+      function(w,l){ return 'El enfrentamiento entre '+w+' y '+l+' termina rápido: '+l+' no lo cuenta.'; }
+    ],
+    fight_survive: [
+      function(a,b){ return a+' y '+b+' chocan brevemente, pero ambos logran escapar con heridas leves.'; },
+      function(a,b){ return a+' se enfrenta a '+b+', aunque el cansancio impide que ninguno remate al otro.'; },
+      function(a,b){ return a+' y '+b+' se enfrentan entre las rocas, pero terminan huyendo cada uno por su lado.'; },
+      function(a,b){ return 'El choque entre '+a+' y '+b+' queda en tablas: ninguno se atreve a rematar al otro.'; }
+    ],
+    ally_bond: [
+      function(a,b){ return a+' y '+b+' refuerzan su alianza compartiendo turnos de guardia durante la noche.'; },
+      function(a,b){ return 'La confianza entre '+a+' y '+b+' crece tras superar juntos otro día más.'; },
+      function(a,b){ return a+' y '+b+' planean juntos su próximo movimiento en la arena.'; }
+    ],
+    ally_success: [
+      function(a,b){ return 'Trabajando en equipo, '+a+' y '+b+' consiguen provisiones para varios días.'; },
+      function(a,b){ return a+' y '+b+' sobreviven otra jornada gracias a que se cubren las espaldas.'; },
+      function(a,b){ return 'La alianza entre '+a+' y '+b+' demuestra su valor una vez más.'; }
+    ],
+    betrayal: [
+      function(k,v){ return 'La alianza termina en tragedia: '+k+' acaba con la vida de '+v+' mientras duerme.'; },
+      function(k,v){ return k+' decide que ya no necesita a '+v+' y pone fin a la alianza de la peor manera.'; },
+      function(k,v){ return 'Sin previo aviso, '+k+' rompe la alianza atacando a '+v+' por sorpresa.'; },
+      function(k,v){ return k+' aprovecha un descuido de '+v+' para asegurarse un enemigo menos.'; }
+    ],
+    betrayal_failed_fallback: [
+      function(a,b){ return a+' intenta traicionar a '+b+', pero algo sale mal y ambos terminan huyendo por separado.'; }
+    ],
+    become_lovers: [
+      function(a,b){ return 'Lo que empezó como alianza se convierte en algo más entre '+a+' y '+b+'.'; },
+      function(a,b){ return 'Entre turno y turno de guardia, '+a+' y '+b+' se dan cuenta de que sienten algo más.'; },
+      function(a,b){ return a+' y '+b+' deciden que, pase lo que pase, quieren afrontarlo juntos.'; }
+    ],
+    ally_split: [
+      function(a,b){ return a+' y '+b+' deciden separarse: cada uno tendrá más posibilidades por su cuenta.'; },
+      function(a,b){ return 'La alianza entre '+a+' y '+b+' se disuelve sin rencores, al menos por ahora.'; },
+      function(a,b){ return a+' y '+b+' discuten sobre la estrategia a seguir y terminan tomando caminos distintos.'; }
+    ],
+    romance_moment: [
+      function(a,b){ return a+' y '+b+' roban un instante de calma junto al fuego, lejos del peligro.'; },
+      function(a,b){ return 'En medio del caos, '+a+' y '+b+' encuentran consuelo el uno en el otro.'; },
+      function(a,b){ return a+' y '+b+' prometen que, si uno cae, el otro seguirá luchando por los dos.'; }
+    ],
+    romance_success: [
+      function(a,b){ return a+' y '+b+' sobreviven otra jornada más, cada vez más unidos.'; },
+      function(a,b){ return 'Juntos, '+a+' y '+b+' consiguen esquivar el peligro una vez más.'; }
+    ],
+    romance_protect: [
+      function(p,s){ return p+' se interpone entre '+s+' y el peligro. La arena se cobra su vida, pero '+s+' sigue en pie.'; },
+      function(p,s){ return 'En el último instante, '+p+' empuja a '+s+' fuera de peligro, pagando el precio.'; },
+      function(p,s){ return p+' elige salvar a '+s+' antes que a sí mismo, y la arena no perdona esa elección.'; }
+    ],
+    romance_protect_fallback: [
+      function(a,b){ return a+' intenta proteger a '+b+' del peligro, y esta vez la arena decide perdonarlos a ambos.'; }
+    ],
+    jealousy_betrayal: [
+      function(k,v){ return 'Los celos pueden más que el amor: '+k+' termina con la vida de '+v+' mientras duerme.'; },
+      function(k,v){ return 'Unos rumores de traición bastan para que '+k+' decida golpear primero contra '+v+'.'; },
+      function(k,v){ return 'El amor se convierte en arma: '+k+' elimina a '+v+' antes de que puedan separarlos.'; }
+    ],
+    jealousy_fallback: [
+      function(a,b){ return 'Los celos casi cuestan caro entre '+a+' y '+b+', pero ninguno se atreve a dar el golpe final.'; }
+    ],
+    group_alliance: [
+      function(a,b,c){ return a+', '+b+' y '+c+' sellan una alianza junto al fuego: cazarán en equipo mientras dure la tregua.'; },
+      function(a,b,c){ return 'Tres cabezas piensan mejor que una: '+a+', '+b+' y '+c+' deciden unir fuerzas.'; },
+      function(a,b,c){ return a+', '+b+' y '+c+' acuerdan turnarse la vigilancia y compartir lo que encuentren.'; }
+    ],
+    group_success: [
+      function(a,b,c){ return a+', '+b+' y '+c+' pasan la jornada juntos, cubriéndose las espaldas sin incidentes.'; },
+      function(a,b,c){ return 'El trío formado por '+a+', '+b+' y '+c+' consigue avanzar sin sobresaltos.'; }
+    ],
+    group_none: [
+      function(a,b,c){ return a+', '+b+' y '+c+' coinciden en la misma zona, pero cada uno sigue su propio camino.'; },
+      function(a,b,c){ return 'Nada de interés ocurre entre '+a+', '+b+' y '+c+' durante esta jornada.'; }
+    ],
+    group_split: [
+      function(a,b,c){ return 'Las tensiones entre '+a+', '+b+' y '+c+' terminan por romper cualquier acuerdo entre ellos.'; },
+      function(a,b,c){ return a+', '+b+' y '+c+' ya no confían entre sí y deciden separarse antes de que sea tarde.'; }
+    ],
+    group_ambush_internal: [
+      function(k,al,v){ return 'El grupo formado por '+v+', '+k+' y '+al+' se rompe cuando '+k+' decide que dos bocas que alimentar son demasiadas y ataca a '+v+'.'; },
+      function(k,al,v){ return k+' aprovecha la noche para acabar con '+v+' mientras '+al+' mira hacia otro lado.'; },
+      function(k,al,v){ return 'Sin que '+al+' pueda evitarlo, '+k+' se vuelve contra '+v+' y pone fin a la alianza de golpe.'; }
+    ],
+    group_ambush_external: [
+      function(s1,s2,v){ return 'Una trampa colectiva sorprende al grupo: '+s1+' y '+s2+' logran escapar, pero '+v+' no corre la misma suerte.'; },
+      function(s1,s2,v){ return 'Algo ataca desde la oscuridad. '+s1+' y '+s2+' consiguen huir; '+v+' se queda atrás para siempre.'; },
+      function(s1,s2,v){ return 'El terreno se vuelve trampa mortal: '+s1+' y '+s2+' sobreviven de milagro, '+v+' no tiene la misma suerte.'; }
+    ],
+    ambush_escape_fallback: [
+      function(a,b,c){ return 'El peligro roza a '+a+', '+b+' y '+c+', pero los tres logran escapar con vida esta vez.'; }
+    ],
+    final_duel: [
+      function(w,l){ return 'Solo quedan '+w+' y '+l+'. Tras un choque final, '+w+' es quien logra sobrevivir.'; },
+      function(w,l){ return w+' y '+l+' se encuentran cara a cara por última vez. Cuando todo termina, solo '+w+' sigue en pie.'; },
+      function(w,l){ return 'El destino de la arena se decide entre '+w+' y '+l+'. '+w+' se alza con la victoria.'; }
+    ],
+    bloodbath_announce: [ 'Comienza el baño de sangre en la Cornucopia. Los primeros minutos serán decisivos.' ],
+    feast_announce: [ 'Se convoca un festín junto a la Cornucopia. La tentación de unos buenos suministros puede costar caro.' ],
+    victory: [ function(w){ return w+' lo ha conseguido. La arena por fin calla.'; } ]
+  };
+
+  var CATEGORY_LABEL = {
+    announcement: 'Aviso', death: 'Muerte', alliance: 'Alianza', romance: 'Amorío',
+    item: 'Hallazgo', fight: 'Enfrentamiento', neutral: 'Crónica', victory: 'Victoria'
+  };
+
+  function safeKill(t, cause, round){
+    if(remainingAlive <= 1) return false;
+    t.alive = false; t.cause = cause; t.diedRound = round;
+    remainingAlive -= 1;
+    return true;
+  }
+  function addAlly(a,b){
+    if(a.allies.indexOf(b.id) === -1) a.allies.push(b.id);
+    if(b.allies.indexOf(a.id) === -1) b.allies.push(a.id);
+  }
+  function removeAlly(a,b){
+    a.allies = a.allies.filter(function(id){ return id !== b.id; });
+    b.allies = b.allies.filter(function(id){ return id !== a.id; });
+  }
+  function setLovers(a,b){ a.loverId = b.id; b.loverId = a.id; }
+  function pickDominant(a,b){
+    var wa = a.kills+1, wb = b.kills+1;
+    return (Math.random()*(wa+wb) < wa) ? [a,b] : [b,a];
+  }
+  function deathMultiplier(aliveCount, isBloodbath, isFeast){
+    var m = 1;
+    if(isBloodbath) m *= 2.0;
+    if(isFeast) m *= 1.5;
+    if(aliveCount <= 4) m *= 1.6; else if(aliveCount <= 8) m *= 1.2;
+    return m;
+  }
+  function pickGroupSize(remaining, isBloodbath){
+    var max = Math.min(3, remaining);
+    if(max === 1) return 1;
+    var opts = isBloodbath ? [[35,1],[38,2],[27,3]] : [[55,1],[33,2],[12,3]];
+    var filtered = opts.filter(function(p){ return p[1] <= max; });
+    return weightedChoice(filtered);
+  }
+
+  function resolveSolo(t, ctx){
+    var dm = ctx.dm;
+    var cat = weightedChoice([
+      [26,'explore'],[14,'find_item'],[14,'hide'],[10,'injured'],
+      [12*dm,'death_accident'],[8*dm,'death_illness']
+    ]);
+    if(cat === 'death_accident' || cat === 'death_illness'){
+      if(safeKill(t, cat, ctx.round)){
+        return { type:'death', text: choice(TPL[cat])(t.name), ids:[t.id] };
+      }
+      return { type:'neutral', text: choice(TPL.injured)(t.name), ids:[t.id] };
+    }
+    return { type: cat === 'find_item' ? 'item' : 'neutral', text: choice(TPL[cat])(t.name), ids:[t.id] };
+  }
+
+  function resolveStrangers(a,b,ctx){
+    var dm = ctx.dm;
+    var cat = weightedChoice([[26,'meet_alliance'],[12,'meet_romance'],[28*dm,'fight'],[34,'ignore']]);
+    if(cat === 'meet_alliance'){ addAlly(a,b); return { type:'alliance', text: choice(TPL.meet_alliance)(a.name,b.name), ids:[a.id,b.id] }; }
+    if(cat === 'meet_romance'){ setLovers(a,b); return { type:'romance', text: choice(TPL.meet_romance)(a.name,b.name), ids:[a.id,b.id] }; }
+    if(cat === 'ignore'){ return { type:'neutral', text: choice(TPL.ignore)(a.name,b.name), ids:[a.id,b.id] }; }
+    if(Math.random() < 0.55){
+      var pair = pickDominant(a,b), winner = pair[0], loser = pair[1];
+      if(safeKill(loser,'fight',ctx.round)){
+        winner.kills += 1;
+        return { type:'death', text: choice(TPL.fight_death)(winner.name,loser.name), ids:[a.id,b.id] };
+      }
+    }
+    return { type:'fight', text: choice(TPL.fight_survive)(a.name,b.name), ids:[a.id,b.id] };
+  }
+
+  function resolveAllies(a,b,ctx){
+    var dm = ctx.dm;
+    var cat = weightedChoice([[30,'ally_bond'],[22,'ally_success'],[16*dm,'betrayal'],[10,'become_lovers'],[14,'ally_split']]);
+    if(cat === 'ally_bond') return { type:'alliance', text: choice(TPL.ally_bond)(a.name,b.name), ids:[a.id,b.id] };
+    if(cat === 'ally_success') return { type:'alliance', text: choice(TPL.ally_success)(a.name,b.name), ids:[a.id,b.id] };
+    if(cat === 'become_lovers'){ setLovers(a,b); return { type:'romance', text: choice(TPL.become_lovers)(a.name,b.name), ids:[a.id,b.id] }; }
+    if(cat === 'ally_split'){ removeAlly(a,b); return { type:'alliance', text: choice(TPL.ally_split)(a.name,b.name), ids:[a.id,b.id] }; }
+    var pair = pickDominant(a,b), betrayer = pair[0], victim = pair[1];
+    removeAlly(a,b);
+    if(safeKill(victim,'betrayal',ctx.round)){
+      betrayer.kills += 1;
+      return { type:'death', text: choice(TPL.betrayal)(betrayer.name,victim.name), ids:[a.id,b.id] };
+    }
+    return { type:'fight', text: choice(TPL.betrayal_failed_fallback)(a.name,b.name), ids:[a.id,b.id] };
+  }
+
+  function resolveLovers(a,b,ctx){
+    var dm = ctx.dm;
+    var cat = weightedChoice([[40,'romance_moment'],[16*dm,'romance_protect'],[8*dm,'jealousy_betrayal'],[36,'romance_success']]);
+    if(cat === 'romance_moment') return { type:'romance', text: choice(TPL.romance_moment)(a.name,b.name), ids:[a.id,b.id] };
+    if(cat === 'romance_success') return { type:'romance', text: choice(TPL.romance_success)(a.name,b.name), ids:[a.id,b.id] };
+    if(cat === 'romance_protect'){
+      var pp = Math.random() < 0.5 ? [a,b] : [b,a], protector = pp[0], saved = pp[1];
+      if(safeKill(protector,'romance_protect',ctx.round)){
+        return { type:'death', text: choice(TPL.romance_protect)(protector.name,saved.name), ids:[a.id,b.id] };
+      }
+      return { type:'romance', text: choice(TPL.romance_protect_fallback)(a.name,b.name), ids:[a.id,b.id] };
+    }
+    var jp = pickDominant(a,b), killer = jp[0], victim = jp[1];
+    if(safeKill(victim,'jealousy',ctx.round)){
+      killer.kills += 1;
+      return { type:'death', text: choice(TPL.jealousy_betrayal)(killer.name,victim.name), ids:[a.id,b.id] };
+    }
+    return { type:'fight', text: choice(TPL.jealousy_fallback)(a.name,b.name), ids:[a.id,b.id] };
+  }
+
+  function resolveDuo(a,b,ctx){
+    if(a.loverId === b.id) return resolveLovers(a,b,ctx);
+    if(a.allies.indexOf(b.id) !== -1) return resolveAllies(a,b,ctx);
+    return resolveStrangers(a,b,ctx);
+  }
+
+  function resolveTrio(a,b,c,ctx){
+    var dm = ctx.dm;
+    var cat = weightedChoice([[26,'group_alliance'],[20,'group_success'],[22*dm,'group_ambush'],[16*dm,'group_split'],[16,'group_none']]);
+    if(cat === 'group_alliance'){
+      addAlly(a,b); addAlly(b,c); addAlly(a,c);
+      return { type:'alliance', text: choice(TPL.group_alliance)(a.name,b.name,c.name), ids:[a.id,b.id,c.id] };
+    }
+    if(cat === 'group_success') return { type:'neutral', text: choice(TPL.group_success)(a.name,b.name,c.name), ids:[a.id,b.id,c.id] };
+    if(cat === 'group_none') return { type:'neutral', text: choice(TPL.group_none)(a.name,b.name,c.name), ids:[a.id,b.id,c.id] };
+    if(cat === 'group_split'){
+      removeAlly(a,b); removeAlly(b,c); removeAlly(a,c);
+      return { type:'alliance', text: choice(TPL.group_split)(a.name,b.name,c.name), ids:[a.id,b.id,c.id] };
+    }
+    var members = [a,b,c];
+    var victimIdx = rand(3);
+    var victim = members[victimIdx];
+    var survivors = members.filter(function(_,i){ return i !== victimIdx; });
+    if(Math.random() < 0.5){
+      var kFirst = Math.random() < 0.5;
+      var killer = kFirst ? survivors[0] : survivors[1];
+      var ally = kFirst ? survivors[1] : survivors[0];
+      if(safeKill(victim,'ambush',ctx.round)){
+        killer.kills += 1;
+        return { type:'death', text: choice(TPL.group_ambush_internal)(killer.name,ally.name,victim.name), ids:[a.id,b.id,c.id] };
+      }
+    } else {
+      if(safeKill(victim,'ambush',ctx.round)){
+        return { type:'death', text: choice(TPL.group_ambush_external)(survivors[0].name,survivors[1].name,victim.name), ids:[a.id,b.id,c.id] };
+      }
+    }
+    return { type:'fight', text: choice(TPL.ambush_escape_fallback)(a.name,b.name,c.name), ids:[a.id,b.id,c.id] };
+  }
+
+  function resolveGroupEvent(members, ctx){
+    if(members.length === 1) return resolveSolo(members[0], ctx);
+    if(members.length === 2) return resolveDuo(members[0], members[1], ctx);
+    return resolveTrio(members[0], members[1], members[2], ctx);
+  }
+
+  function simulateRound(){
+    var aliveList = state.tributes.filter(function(t){ return t.alive; });
+    if(aliveList.length <= 1) return;
+    state.round += 1;
+    var round = state.round;
+    var entries = [];
+    var isBloodbath = round === 1 && aliveList.length > 2;
+    var isFeast = !isBloodbath && aliveList.length > 3 && round % 5 === 0;
+    remainingAlive = aliveList.length;
+
+    if(isBloodbath) entries.push({ type:'announcement', text: choice(TPL.bloodbath_announce), ids:[] });
+    else if(isFeast) entries.push({ type:'announcement', text: choice(TPL.feast_announce), ids:[] });
+
+    if(aliveList.length === 2){
+      var pair = shuffle(aliveList);
+      var dom = pickDominant(pair[0], pair[1]);
+      var winner = dom[0], loser = dom[1];
+      safeKill(loser, 'final_duel', round);
+      winner.kills += 1;
+      entries.push({ type:'death', text: choice(TPL.final_duel)(winner.name, loser.name), ids:[pair[0].id, pair[1].id] });
+    } else {
+      var dm = deathMultiplier(aliveList.length, isBloodbath, isFeast);
+      var pool = shuffle(aliveList.map(function(t){ return t.id; }));
+      while(pool.length > 0){
+        var size = pickGroupSize(pool.length, isBloodbath);
+        var ids = pool.splice(0, size);
+        var members = ids.map(function(id){ return state.tributes.filter(function(t){ return t.id === id; })[0]; });
+        entries.push(resolveGroupEvent(members, { round: round, dm: dm }));
+      }
+    }
+
+    for(var i=0;i<entries.length;i++) state.log.push(Object.assign({ round: round }, entries[i]));
+
+    var stillAlive = state.tributes.filter(function(t){ return t.alive; });
+    if(stillAlive.length <= 1){
+      state.phase = 'finished';
+      state.winnerId = stillAlive[0] ? stillAlive[0].id : null;
+      if(state.winnerId){
+        state.log.push({ round: round, type:'victory', text: choice(TPL.victory)(stillAlive[0].name), ids:[state.winnerId] });
+      }
+    }
+  }
+
+  /* ---------------- persistence ---------------- */
+  function createDefaultState(){
+    return {
+      phase: 'setup',
+      setupNames: EXAMPLE_NAMES.slice(),
+      tributes: [],
+      round: 0,
+      log: [],
+      winnerId: null,
+      showVictoryScreen: false
+    };
+  }
+  function loadFromStorage(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function saveToStorage(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+
+  /* ---------------- DOM refs ---------------- */
+  var el = {};
+  function cacheEls(){
+    el.tributeList = document.getElementById('tribute-list');
+    el.btnAddTribute = document.getElementById('btn-add-tribute');
+    el.tributeCount = document.getElementById('tribute-count');
+    el.btnStart = document.getElementById('btn-start');
+    el.setupError = document.getElementById('setup-error');
+
+    el.screenSetup = document.getElementById('screen-setup');
+    el.screenGame = document.getElementById('screen-game');
+    el.screenVictory = document.getElementById('screen-victory');
+
+    el.dayNumber = document.getElementById('day-number');
+    el.alivePill = document.getElementById('alive-pill');
+    el.log = document.getElementById('log');
+    el.btnNext = document.getElementById('btn-next-round');
+    el.btnRoster = document.getElementById('btn-roster');
+    el.btnResetGame = document.getElementById('btn-reset-game');
+    el.confirmBar = document.getElementById('confirm-reset-bar');
+    el.btnConfirmReset = document.getElementById('btn-confirm-reset');
+    el.btnCancelReset = document.getElementById('btn-cancel-reset');
+
+    el.sheetBackdrop = document.getElementById('sheet-backdrop');
+    el.rosterSheet = document.getElementById('roster-sheet');
+    el.rosterList = document.getElementById('roster-list');
+    el.btnCloseRoster = document.getElementById('btn-close-roster');
+
+    el.victoryName = document.getElementById('victory-name');
+    el.victoryDays = document.getElementById('victory-days');
+    el.victoryKills = document.getElementById('victory-kills');
+    el.memorialList = document.getElementById('memorial-list');
+    el.btnReplaySame = document.getElementById('btn-replay-same');
+    el.btnEditTributes = document.getElementById('btn-edit-tributes');
+  }
+
+  /* ---------------- setup screen ---------------- */
+  function renderSetup(){
+    el.tributeList.innerHTML = '';
+    state.setupNames.forEach(function(name, i){
+      var row = document.createElement('div');
+      row.className = 'tribute-row';
+      var n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = (i+1) + '.';
+      var input = document.createElement('input');
+      input.className = 'tribute-input';
+      input.type = 'text';
+      input.placeholder = 'Nombre del tributo';
+      input.value = name;
+      input.id = 'tribute-input-' + i;
+      input.addEventListener('input', function(){
+        state.setupNames[i] = input.value;
+        saveToStorage();
+        updateSetupMeta();
+      });
+      input.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter'){
+          ev.preventDefault();
+          addTributeRow();
+        }
+      });
+      var rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn-remove';
+      rm.setAttribute('aria-label', 'Eliminar tributo');
+      rm.textContent = '×';
+      rm.addEventListener('click', function(){
+        state.setupNames.splice(i,1);
+        saveToStorage();
+        renderSetup();
+      });
+      row.appendChild(n); row.appendChild(input); row.appendChild(rm);
+      el.tributeList.appendChild(row);
+    });
+    updateSetupMeta();
+  }
+  function updateSetupMeta(){
+    var count = state.setupNames.filter(function(s){ return s.trim(); }).length;
+    el.tributeCount.textContent = count + (count === 1 ? ' tributo' : ' tributos');
+    el.btnStart.disabled = count < MIN_TRIBUTES;
+    el.btnAddTribute.disabled = state.setupNames.length >= MAX_TRIBUTES;
+  }
+  function addTributeRow(){
+    if(state.setupNames.length >= MAX_TRIBUTES) return;
+    state.setupNames.push('');
+    saveToStorage();
+    renderSetup();
+    var inputs = el.tributeList.querySelectorAll('.tribute-input');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  }
+  function startGame(){
+    var names = state.setupNames.map(function(s){ return s.trim(); }).filter(Boolean);
+    if(names.length < MIN_TRIBUTES){
+      el.setupError.textContent = 'Añade al menos ' + MIN_TRIBUTES + ' tributos para empezar.';
+      return;
+    }
+    el.setupError.textContent = '';
+    state.tributes = names.map(function(name, i){
+      return { id: 't'+i+'-'+Date.now()+'-'+rand(10000), name: name, alive: true, allies: [], loverId: null, kills: 0, diedRound: null, cause: null };
+    });
+    state.round = 0;
+    state.log = [];
+    state.winnerId = null;
+    state.phase = 'playing';
+    state.showVictoryScreen = false;
+    renderedLogCount = 0;
+    simulateRound();
+    saveToStorage();
+    renderApp();
+  }
+
+  /* ---------------- game screen ---------------- */
+  function renderGameHeader(){
+    var alive = state.tributes.filter(function(t){ return t.alive; }).length;
+    el.dayNumber.textContent = state.round;
+    el.alivePill.textContent = alive + ' de ' + state.tributes.length + ' vivos';
+  }
+  function buildLogEntryEl(entry){
+    var div = document.createElement('div');
+    div.className = 'log-entry type-' + entry.type;
+    var label = CATEGORY_LABEL[entry.type] || 'Crónica';
+    div.innerHTML =
+      '<div class="log-meta">' +
+        '<span class="log-day">Día ' + entry.round + '</span>' +
+        '<span class="log-tag type-' + entry.type + '">' + label + '</span>' +
+      '</div>' +
+      '<p class="log-text">' + escapeHtml(entry.text) + '</p>';
+    return div;
+  }
+  function renderLog(animateOnlyNew){
+    if(!animateOnlyNew){
+      el.log.innerHTML = '';
+      renderedLogCount = 0;
+    }
+    for(var i=renderedLogCount;i<state.log.length;i++){
+      el.log.appendChild(buildLogEntryEl(state.log[i]));
+    }
+    renderedLogCount = state.log.length;
+    el.log.parentElement.scrollTop = el.log.parentElement.scrollHeight;
+  }
+  function updateNextButton(){
+    if(state.phase === 'finished'){
+      el.btnNext.textContent = 'Ver ceremonia de victoria →';
+      el.btnNext.disabled = false;
+      el.btnNext.onclick = goToVictory;
+    } else {
+      el.btnNext.textContent = 'Siguiente Ronda →';
+      el.btnNext.disabled = false;
+      el.btnNext.onclick = handleNextRound;
+    }
+  }
+  function handleNextRound(){
+    el.btnNext.disabled = true;
+    simulateRound();
+    renderGameHeader();
+    renderLog(true);
+    saveToStorage();
+    updateNextButton();
+  }
+  function goToVictory(){
+    state.showVictoryScreen = true;
+    saveToStorage();
+    renderApp();
+  }
+  function renderRoster(){
+    el.rosterList.innerHTML = '';
+    var sorted = state.tributes.slice().sort(function(a,b){
+      if(a.alive !== b.alive) return a.alive ? -1 : 1;
+      if(a.alive) return (b.kills - a.kills) || a.name.localeCompare(b.name);
+      return (b.diedRound||0) - (a.diedRound||0);
+    });
+    sorted.forEach(function(t){
+      var row = document.createElement('div');
+      row.className = 'roster-row' + (t.alive ? '' : ' is-dead');
+      var chips = [];
+      if(t.kills > 0) chips.push('<span class="chip chip-kills">Bajas: ' + t.kills + '</span>');
+      var aliveAllies = t.allies.map(function(id){ return state.tributes.filter(function(x){ return x.id===id; })[0]; }).filter(function(x){ return x && x.alive; });
+      if(aliveAllies.length) chips.push('<span class="chip chip-ally">Aliados: ' + escapeHtml(aliveAllies.map(function(x){ return x.name; }).join(', ')) + '</span>');
+      if(t.loverId){
+        var lover = state.tributes.filter(function(x){ return x.id === t.loverId; })[0];
+        if(lover){
+          chips.push(lover.alive
+            ? '<span class="chip chip-love">Vínculo con ' + escapeHtml(lover.name) + '</span>'
+            : '<span class="chip chip-love">Perdió a ' + escapeHtml(lover.name) + '</span>');
+        }
+      }
+      row.innerHTML =
+        '<div class="roster-main">' +
+          '<span class="status-dot ' + (t.alive?'alive':'dead') + '"></span>' +
+          '<span class="roster-name">' + escapeHtml(t.name) + '</span>' +
+          '<span class="roster-status">' + (t.alive ? 'En la arena' : 'Fuera de juego · Día ' + t.diedRound) + '</span>' +
+        '</div>' +
+        (chips.length ? '<div class="roster-chips">' + chips.join('') + '</div>' : '');
+      el.rosterList.appendChild(row);
+    });
+  }
+  function openRoster(){ renderRoster(); el.rosterSheet.hidden = false; el.sheetBackdrop.hidden = false; }
+  function closeRoster(){ el.rosterSheet.hidden = true; el.sheetBackdrop.hidden = true; }
+
+  function resetToSetupConfirmed(){
+    state.phase = 'setup';
+    state.tributes = [];
+    state.round = 0;
+    state.log = [];
+    state.winnerId = null;
+    state.showVictoryScreen = false;
+    el.confirmBar.hidden = true;
+    saveToStorage();
+    renderApp();
+  }
+
+  /* ---------------- victory screen ---------------- */
+  function renderVictory(){
+    var winner = state.tributes.filter(function(t){ return t.id === state.winnerId; })[0];
+    el.victoryName.textContent = winner ? winner.name : '—';
+    el.victoryDays.textContent = state.round;
+    el.victoryKills.textContent = winner ? winner.kills : 0;
+    var fallen = state.tributes.filter(function(t){ return !t.alive; }).sort(function(a,b){ return (b.diedRound||0)-(a.diedRound||0); });
+    el.memorialList.innerHTML = fallen.map(function(t){
+      return '<div class="memorial-row"><span class="name">' + escapeHtml(t.name) + '</span><span class="when">Día ' + t.diedRound + '</span></div>';
+    }).join('');
+  }
+  function replaySameCast(){
+    var names = state.tributes.map(function(t){ return t.name; });
+    state.tributes = names.map(function(name, i){
+      return { id: 't'+i+'-'+Date.now()+'-'+rand(10000), name: name, alive: true, allies: [], loverId: null, kills: 0, diedRound: null, cause: null };
+    });
+    state.round = 0;
+    state.log = [];
+    state.winnerId = null;
+    state.phase = 'playing';
+    state.showVictoryScreen = false;
+    renderedLogCount = 0;
+    simulateRound();
+    saveToStorage();
+    renderApp();
+  }
+  function editTributes(){
+    state.setupNames = state.tributes.map(function(t){ return t.name; });
+    state.phase = 'setup';
+    state.tributes = [];
+    state.round = 0;
+    state.log = [];
+    state.winnerId = null;
+    state.showVictoryScreen = false;
+    saveToStorage();
+    renderApp();
+  }
+
+  /* ---------------- ambient embers ---------------- */
+  function spawnEmbers(){
+    var container = document.getElementById('embers');
+    for(var i=0;i<10;i++){
+      var s = document.createElement('span');
+      s.className = 'ember';
+      s.style.left = (Math.random()*100) + '%';
+      s.style.setProperty('--drift', (Math.random()*40-20) + 'px');
+      s.style.animationDuration = (7 + Math.random()*7) + 's';
+      s.style.animationDelay = (Math.random()*8) + 's';
+      container.appendChild(s);
+    }
+  }
+
+  /* ---------------- top-level render ---------------- */
+  function renderApp(){
+    if(state.phase === 'setup'){
+      el.screenSetup.hidden = false;
+      el.screenGame.hidden = true;
+      el.screenVictory.hidden = true;
+      renderSetup();
+    } else if(state.phase === 'playing' || (state.phase === 'finished' && !state.showVictoryScreen)){
+      el.screenSetup.hidden = true;
+      el.screenGame.hidden = false;
+      el.screenVictory.hidden = true;
+      renderGameHeader();
+      renderLog(false);
+      updateNextButton();
+    } else {
+      el.screenSetup.hidden = true;
+      el.screenGame.hidden = true;
+      el.screenVictory.hidden = false;
+      renderVictory();
+    }
+  }
+
+  function wireEvents(){
+    el.btnAddTribute.addEventListener('click', addTributeRow);
+    el.btnStart.addEventListener('click', startGame);
+    el.btnRoster.addEventListener('click', openRoster);
+    el.btnCloseRoster.addEventListener('click', closeRoster);
+    el.sheetBackdrop.addEventListener('click', closeRoster);
+    el.btnResetGame.addEventListener('click', function(){ el.confirmBar.hidden = false; });
+    el.btnCancelReset.addEventListener('click', function(){ el.confirmBar.hidden = true; });
+    el.btnConfirmReset.addEventListener('click', resetToSetupConfirmed);
+    el.btnReplaySame.addEventListener('click', replaySameCast);
+    el.btnEditTributes.addEventListener('click', editTributes);
+  }
+
+  function start(initialData){
+    cacheEls();
+    wireEvents();
+    spawnEmbers();
+    state = (initialData && initialData.state) || loadFromStorage() || createDefaultState();
+    if(!state.showVictoryScreen) state.showVictoryScreen = false;
+    renderApp();
+  }
+
+  if(window.claude && window.claude.hot){
+    window.claude.hot.snapshot(function(){ return { state: state }; });
+    if(window.claude.hot.ready) window.claude.hot.ready(start);
+    else start(window.claude.hot.data || {});
+  } else {
+    start(null);
+  }
+})();
+</script>
 </body>
 </html>
