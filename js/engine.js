@@ -283,7 +283,7 @@
     return m;
   }
   function ev(type, text, members, scene, prop){
-    return { type: type, text: text, ids: members.map(function(t){ return t.id; }), scene: scene, prop: prop };
+    return { type: type, text: text, ids: members.map(function(t){ return t.id; }), scene: scene, prop: prop, biome: curGame ? curGame.biome : null };
   }
 
   var curGame = null;
@@ -325,8 +325,12 @@
     return game.tributes.filter(function(t){ return t.alive && !t.baby && t.team === teamId; }).length;
   }
   function edMod(type){
+    var m = 1;
     var mods = curGame && curGame.emods;
-    return mods && mods[type] ? mods[type] : 1;
+    if(mods && mods[type]) m *= mods[type];
+    var pend = curGame && curGame.pendingSpecial && curGame.pendingSpecial.mods;
+    if(pend && pend[type]) m *= pend[type];
+    return m;
   }
   function jit(k){
     if(!curGame) return 1;
@@ -435,6 +439,7 @@
       if(hasBaby !== !!e.family) return;
       if(e.team && !tm) return;
       if(e.ffa && tm) return;
+      if(e.biome && e.biome !== curGame.biome) return;
       if(tm && /(^|\+)unally3?(\+|$)/.test(e.fx || '') && m.some(function(t, i){ return m.some(function(u, j){ return j > i && sameTeam(t, u); }); })) return;
       var lethal = !!lethalPart(e);
       if(wantDeath && !lethal) return;
@@ -675,7 +680,15 @@
   }
 
   function makeTribute(c){
-    return { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo, alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null, baby: false, parents: null, preg: null, team: null, teamColor: null, trait: null };
+    var nick = c.nickname && String(c.nickname).trim();
+    return {
+      id: c.id, name: nick || c.name, fullName: c.name,
+      gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin, photo: c.photo,
+      hairstyle: c.hairstyle || 'corto', glasses: c.glasses || 'ninguna', hat: c.hat || 'ninguno', outfit: c.outfit || 'oliva',
+      alive: true, allies: [], loverId: null, kills: 0, item: null, diedRound: null, cause: null,
+      baby: false, parents: null, preg: null, team: null, teamColor: null,
+      trait: c.trait || null
+    };
   }
 
   var PACE = { corta: 0.36, media: 0.22, larga: 0.15 };
@@ -731,6 +744,33 @@
     ts.forEach(function(t){ ts.forEach(function(u){ if(t !== u && t.team === u.team) addAlly(t, u); }); });
   }
 
+  var SPECIAL_INTRO = {
+    festin: 'El público ha pedido un festín en la Cornucopia.',
+    amor: 'Una lluvia de pétalos cae sobre la arena: hoy manda el amor.',
+    tregua: 'Se declara una tregua general por petición del público.',
+    caos: 'El público pide emociones fuertes y la arena obedece.'
+  };
+  A.SPECIAL_DAYS = [
+    { id: 'festin', label: 'Festín', desc: 'Más peligro y más objetos mañana.' },
+    { id: 'amor', label: 'Lluvia de amor', desc: 'Mañana manda el romance.' },
+    { id: 'tregua', label: 'Tregua general', desc: 'Mañana nadie muere: solo ayuda y alianzas.' },
+    { id: 'caos', label: 'Caos total', desc: 'Mañana hay una muerte garantizada.' }
+  ];
+  var SPECIAL_SPECS = {
+    festin: { mods: { death: 1.6, fight: 1.3, item: 1.4 } },
+    amor: { mods: { romance: 3, family: 1.5 } },
+    tregua: { mods: { alliance: 2.2, heal: 2, neutral: 1.4 } },
+    caos: { mods: { death: 1.4, betrayal: 1.6, fight: 1.4 } }
+  };
+  A.BIOMES = [
+    { id: null, label: 'Aleatorio' },
+    { id: 'selva', label: 'Selva' },
+    { id: 'nieve', label: 'Nieve' },
+    { id: 'desierto', label: 'Desierto' },
+    { id: 'ciudad', label: 'Ciudad abandonada' },
+    { id: 'isla', label: 'Isla' }
+  ];
+
   A.Engine = {
     label: function(type){ return CATEGORY_LABEL[type] || 'Crónica'; },
 
@@ -742,14 +782,15 @@
       tributes.forEach(function(t){ if(Math.random() < 0.4) t.item = choice(loot); });
       if(A.TRAITS){
         var ids = Object.keys(A.TRAITS);
-        tributes.forEach(function(t){ if(Math.random() < 0.85) t.trait = choice(ids); });
+        tributes.forEach(function(t){ if(!t.trait && Math.random() < 0.85) t.trait = choice(ids); });
       }
       var mode = opts.mode === 'equipos' || opts.mode === 'parejas' ? opts.mode : 'todos';
       if(tributes.length < 4) mode = 'todos';
       var game = {
-        version: 3,
+        version: 4,
         pace: opts.pace || 'media',
         mode: mode,
+        biome: A.BIOMES && A.BIOMES.some(function(b){ return b.id === opts.biome; }) ? opts.biome : null,
         calm: 0,
         streak: 0,
         tributes: tributes,
@@ -763,7 +804,9 @@
         teams: null,
         edition: null,
         emods: {},
-        lethality: 1
+        lethality: 1,
+        influence: 4,
+        pendingSpecial: null
       };
       if(A.EDITIONS && A.EDITIONS.length){
         var ed = weightedChoice(A.EDITIONS.map(function(x){ return [x.w || 1, x]; }));
@@ -788,14 +831,14 @@
       if(teamMode(game)){
         var how = game.mode === 'parejas' ? 'por parejas' : 'por equipos';
         list.push({
-          type: 'announcement', scene: 'lineup', round: 0, deaths: [],
+          type: 'announcement', scene: 'lineup', round: 0, deaths: [], biome: game.biome,
           text: 'Bienvenidos a La Arena. Hoy se juega ' + how + ': ' + game.teams.length + ' equipos entran en la arena y solo uno saldrá con vida.' + ed,
           ids: game.tributes.map(function(t){ return t.id; })
         });
         game.teams.forEach(function(team){
           var members = game.tributes.filter(function(t){ return t.team === team.id; });
           list.push({
-            type: 'announcement', scene: 'teamintro', round: 0, deaths: [], teamId: team.id, teamName: teamLabel(team), teamColor: team.color,
+            type: 'announcement', scene: 'teamintro', round: 0, deaths: [], teamId: team.id, teamName: teamLabel(team), teamColor: team.color, biome: game.biome,
             text: teamLabel(team) + ' (' + team.colorName.toLowerCase() + '): ' + joinNames(members.map(function(t){ return t.name; })) + '. Su grito de guerra: «' + team.cry + '»',
             ids: members.map(function(t){ return t.id; })
           });
@@ -803,7 +846,7 @@
       } else {
         var who = n <= 10 ? joinNames(game.tributes.map(function(t){ return t.name; })) + ' entran' : n + ' tributos entran';
         list.push({
-          type: 'announcement', scene: 'lineup', round: 0, deaths: [],
+          type: 'announcement', scene: 'lineup', round: 0, deaths: [], biome: game.biome,
           text: 'Bienvenidos a La Arena. ' + who + ' en la arena. Solo una persona saldrá con vida.' + ed,
           ids: game.tributes.map(function(t){ return t.id; })
         });
@@ -814,6 +857,29 @@
     teamLabel: function(game, teamId, lower){ return teamLabel(teamById(game, teamId), lower); },
     teamOf: function(game, teamId){ return teamById(game, teamId); },
     isTeamMode: function(game){ return teamMode(game); },
+
+    sponsor: function(game, tributeId){
+      if(!game || game.finished || game.influence <= 0) return null;
+      var t = byId(game, tributeId);
+      if(!t || !t.alive || t.baby) return null;
+      var loot = ['comida', 'cuchillo', 'botiquin', 'paraguas', 'mapa', 'sarten', 'arco', 'pistola', 'ukelele', 'anillo', 'dados'];
+      var it = choice(loot);
+      t.item = it;
+      game.influence -= 1;
+      return {
+        type: 'item', scene: 'item', prop: A.ITEMS[it].prop, ids: [t.id], deaths: [], round: game.round, biome: game.biome,
+        text: 'Decides patrocinar a ' + t.name + '. Un paracaídas plateado le trae ' + A.ITEMS[it].label + '.'
+      };
+    },
+
+    declareSpecialDay: function(game, kind){
+      if(!game || game.finished || game.influence <= 0 || game.pendingSpecial) return false;
+      var spec = SPECIAL_SPECS[kind];
+      if(!spec) return false;
+      game.pendingSpecial = { kind: kind, mods: spec.mods };
+      game.influence -= 1;
+      return true;
+    },
 
     introEntry: function(game){
       var n = game.tributes.length;
@@ -831,7 +897,10 @@
       game.round += 1;
       var round = game.round;
       var isFirst = round === 1 && alive.length > 2;
-      var isFeast = !isFirst && alive.length > 4 && round % 6 === 0;
+      var special = game.pendingSpecial;
+      var forcedFeast = !!(special && special.kind === 'festin');
+      var naturalFeast = !isFirst && !forcedFeast && alive.length > 4 && round % 6 === 0;
+      var isFeast = forcedFeast || naturalFeast;
       remainingAlive = alive.length;
       currentDeaths = [];
       curGame = game;
@@ -859,13 +928,18 @@
         entry = ev('death', choice(TPL.final_duel)(dom[0], dom[1]), dom, choice(['shoot', 'brawl', 'stab']));
       } else {
         var ctx = { round: round, dm: deathMultiplier(alive.length, isFirst, isFeast) };
-        var wantDeath = Math.random() < deathChance(game, alive.length, isFirst, isFeast);
+        var wantDeath;
+        if(special && special.kind === 'tregua') wantDeath = false;
+        else if(special && special.kind === 'caos') wantDeath = true;
+        else wantDeath = Math.random() < deathChance(game, alive.length, isFirst, isFeast);
         entry = resolveGroup(pickGroup(game, alive, isFirst, wantDeath), ctx, wantDeath);
       }
       game.calm = currentDeaths.length ? 0 : (game.calm || 0) + 1;
       game.streak = currentDeaths.length ? (game.streak || 0) + 1 : 0;
       if(isFirst) entry.text = 'Suena el gong. ' + entry.text;
-      if(isFeast) entry.text = choice(TPL.feast_announce) + ' ' + entry.text;
+      if(naturalFeast) entry.text = choice(TPL.feast_announce) + ' ' + entry.text;
+      if(special) entry.text = SPECIAL_INTRO[special.kind] + ' ' + entry.text;
+      game.pendingSpecial = null;
       entry.round = round;
       entry.deaths = currentDeaths.slice();
 
@@ -880,7 +954,7 @@
         var kidsT = game.tributes.filter(function(t){ return t.baby && t.alive && t.team === left[0].team; });
         var vtext = '¡Victoria para ' + teamLabel(wteam, true) + '! ' + joinNames(left.map(function(t){ return t.name; })) + (left.length === 1 ? ' sale con vida de la arena y lo celebra' : ' salen con vida de la arena y lo celebran') + ' con su grito de guerra: «' + (wteam ? wteam.cry : '') + '»';
         if(kidsT.length) vtext += ' Con ' + (kidsT.length === 1 ? 'su bebé, ' + kidsT[0].name : 'sus bebés') + ' en brazos.';
-        entries.push({ type: 'victory', scene: 'teamvictory', round: round, deaths: [], teamId: game.winnerTeam, teamName: teamLabel(wteam), teamColor: wteam ? wteam.color : null, ids: left.map(function(t){ return t.id; }).concat(kidsT.map(function(t){ return t.id; })), text: vtext });
+        entries.push({ type: 'victory', scene: 'teamvictory', round: round, deaths: [], teamId: game.winnerTeam, teamName: teamLabel(wteam), teamColor: wteam ? wteam.color : null, biome: game.biome, ids: left.map(function(t){ return t.id; }).concat(kidsT.map(function(t){ return t.id; })), text: vtext });
       } else if(left.length <= 1){
         game.finished = true;
         game.winnerId = left[0] ? left[0].id : null;
@@ -889,7 +963,7 @@
           var kid = kids.filter(function(k){ return k.parents.indexOf(left[0].id) !== -1; })[0] || kids[0];
           var vt = choice(TPL.victory)(left[0]);
           if(kid) vt += ' Se lleva a casa a ' + kid.name + ', que ha sobrevivido a todo con una sonrisa.';
-          entries.push({ type: 'victory', scene: 'victory', round: round, deaths: [], ids: kid ? [left[0].id, kid.id] : [left[0].id], text: vt });
+          entries.push({ type: 'victory', scene: 'victory', round: round, deaths: [], biome: game.biome, ids: kid ? [left[0].id, kid.id] : [left[0].id], text: vt });
         }
       }
       return entries;

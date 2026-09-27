@@ -53,3 +53,11 @@ create policy "own list members" on public.list_members
 -- Fotos y tono de piel (ejecutar también en proyectos ya creados; es idempotente).
 alter table public.characters add column if not exists skin  text not null default 'claro';
 alter table public.characters add column if not exists photo text;
+
+-- Personalización ampliada: peinado, gafas, sombrero, ropa, rasgo y mote (idempotente).
+alter table public.characters add column if not exists hairstyle text not null default 'corto';
+alter table public.characters add column if not exists glasses   text not null default 'ninguna';
+alter table public.characters add column if not exists hat       text not null default 'ninguno';
+alter table public.characters add column if not exists outfit    text not null default 'oliva';
+alter table public.characters add column if not exists trait     text;
+alter table public.characters add column if not exists nickname  text;

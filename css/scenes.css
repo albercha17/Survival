@@ -178,3 +178,7 @@
 .scene .laser { position: absolute; left: -10%; width: 120%; height: 3px; background: #ff2d4a; box-shadow: 0 0 8px 2px rgba(255,45,74,.7); opacity: 0; pointer-events: none; }
 .scene .bigwave.small { height: 70px; }
 .scene .kiteline { position: absolute; bottom: 110px; width: 2px; height: 70px; background: rgba(255,255,255,.7); transform: rotate(30deg); transform-origin: 50% 100%; pointer-events: none; }
+
+/* escenarios temáticos */
+.scene .pr-cactus, .scene .pr-ruin { pointer-events: none; }
+.scene .jungleleaf { transform: rotate(180deg); opacity: .92; filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }

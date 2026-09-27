@@ -95,6 +95,12 @@
         <p class="hint" id="pace-hint"></p>
       </div>
 
+      <div class="card pace-card">
+        <span class="field-label">Escenario</span>
+        <div class="pills" id="biome-pills" role="radiogroup" aria-label="Escenario"></div>
+        <p class="hint" id="biome-hint">Cada partida sortea un paisaje distinto.</p>
+      </div>
+
       <p class="setup-error" id="setup-error"></p>
     </div>
 
@@ -111,6 +117,7 @@
       </div>
       <span class="alive-pill" id="alive-pill">— vivos</span>
       <div class="topbar-actions">
+        <button class="icon-btn" id="btn-influence" type="button" aria-label="Influencia del público">★<span class="badge" id="influence-badge" hidden>0</span></button>
         <button class="icon-btn" id="btn-roster" type="button" aria-label="Ver tributos">☰</button>
         <button class="icon-btn ghost" id="btn-reset-game" type="button" aria-label="Abandonar partida">↺</button>
       </div>
@@ -143,6 +150,7 @@
         <button class="ctl ctl-main" id="btn-play" type="button">Pausa</button>
         <button class="ctl" id="btn-speed" type="button" aria-label="Velocidad">1×</button>
         <button class="ctl" id="btn-voice" type="button" aria-pressed="false">Voz</button>
+        <button class="ctl" id="btn-sound" type="button" aria-pressed="true">Sonido</button>
         <button class="ctl" id="btn-skip" type="button">Saltar</button>
       </div>
     </div>
@@ -184,6 +192,22 @@
     <div class="sheet-body" id="roster-list"></div>
   </div>
 
+  <div class="sheet" id="influence-sheet" hidden>
+    <div class="sheet-head">
+      <h3>Influencia del público</h3>
+      <button class="icon-btn ghost" id="btn-close-influence" type="button" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p class="hint" id="influence-count-hint"></p>
+      <p class="field-label">Convocar un día especial</p>
+      <div class="pills" id="special-pills"></div>
+      <p class="hint" id="special-pending-hint" hidden></p>
+      <p class="field-label">Patrocinar a un tributo</p>
+      <p class="hint" id="sponsor-hint"></p>
+      <div id="sponsor-list"></div>
+    </div>
+  </div>
+
   <div class="sheet" id="char-sheet" hidden>
     <div class="sheet-head">
       <h3 id="char-sheet-title">Nuevo personaje</h3>
@@ -214,6 +238,9 @@
         <label class="field-label" for="char-name">Nombre</label>
         <input class="text-input" id="char-name" type="text" maxlength="40" placeholder="Cómo se llama" autocomplete="off">
 
+        <label class="field-label" for="char-nickname">Mote (opcional)</label>
+        <input class="text-input" id="char-nickname" type="text" maxlength="24" placeholder="Cómo lo llamará el narrador" autocomplete="off">
+
         <span class="field-label">Es</span>
         <div class="segmented compact" id="gender-seg" role="radiogroup" aria-label="Género"></div>
 
@@ -225,6 +252,22 @@
 
         <span class="field-label">Tono de piel</span>
         <div class="swatches" id="skin-swatches" role="radiogroup" aria-label="Tono de piel"></div>
+
+        <span class="field-label">Peinado</span>
+        <div class="pills" id="hairstyle-pills" role="radiogroup" aria-label="Peinado"></div>
+
+        <span class="field-label">Gafas</span>
+        <div class="pills" id="glasses-pills" role="radiogroup" aria-label="Gafas"></div>
+
+        <span class="field-label">Sombrero</span>
+        <div class="pills" id="hat-pills" role="radiogroup" aria-label="Sombrero"></div>
+
+        <span class="field-label">Color de ropa</span>
+        <div class="swatches" id="outfit-swatches" role="radiogroup" aria-label="Color de ropa"></div>
+
+        <span class="field-label">Rasgo de personalidad</span>
+        <div class="pills" id="trait-pills" role="radiogroup" aria-label="Rasgo de personalidad"></div>
+        <p class="hint">Sin elegir uno, la arena le asignará casi siempre un rasgo al azar en cada partida.</p>
 
         <p class="setup-error" id="char-error"></p>
         <div class="sheet-actions">
@@ -256,6 +299,7 @@
 <script src="js/events3.js"></script>
 <script src="js/events4.js"></script>
 <script src="js/events5.js"></script>
+<script src="js/events6.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/scene-kit.js"></script>
 <script src="js/scenes.js"></script>
@@ -263,7 +307,9 @@
 <script src="js/scenes3.js"></script>
 <script src="js/scenes4.js"></script>
 <script src="js/scenes5.js"></script>
+<script src="js/scenes6.js"></script>
 <script src="js/narrator.js"></script>
+<script src="js/sound.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
