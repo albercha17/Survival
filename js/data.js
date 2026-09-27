@@ -41,10 +41,49 @@
     };
   }
 
+  // Compatibilidad con una base de datos de Supabase a la que aún no se le
+  // ha aplicado la migración de supabase/schema.sql (columnas nuevas de
+  // personalización). Si el servidor dice que una columna no existe,
+  // reintenta una sola vez con el juego de columnas antiguo en vez de
+  // romper la creación/lectura de personajes.
+  var LEGACY_FIELDS = ['name', 'gender', 'hair', 'eyes', 'skin', 'photo'];
+  var LEGACY_COLS = 'id,' + LEGACY_FIELDS.join(',');
+  var FULL_COLS = 'id,' + LEGACY_FIELDS.concat(['hairstyle', 'glasses', 'hat', 'outfit', 'trait', 'nickname']).join(',');
+  var useLegacyCols = false;
+  var legacyNotified = false;
+  var onLegacyFallback = null;
+  function cols(){ return useLegacyCols ? LEGACY_COLS : FULL_COLS; }
+  function legacyRow(row){
+    var out = {};
+    LEGACY_FIELDS.forEach(function(k){ out[k] = row[k]; });
+    return out;
+  }
+  function payloadFor(row){ return useLegacyCols ? legacyRow(row) : row; }
+  function isMissingColumnError(err){
+    if(!err) return false;
+    if(err.code === '42703' || err.code === 'PGRST204' || err.code === 'PGRST205') return true;
+    return /column .* does not exist|could not find .* column/i.test(err.message || '');
+  }
+  // factory(selectCols) debe devolver una promesa de Supabase ({data, error}).
+  // Ojo: factory debe leer el juego de columnas del payload consultando
+  // useLegacyCols en el momento en que se llama (no capturarlo antes),
+  // para que el reintento use automáticamente las columnas antiguas.
+  function withColumns(factory){
+    return factory(cols()).then(function(r){
+      if(r.error && !useLegacyCols && isMissingColumnError(r.error)){
+        useLegacyCols = true;
+        if(!legacyNotified){ legacyNotified = true; if(onLegacyFallback) onLegacyFallback(); }
+        return factory(cols());
+      }
+      return r;
+    }).then(function(r){ fail(r.error); return r; });
+  }
+
   var Store = {
     isCloud: cloud,
     isSignedIn: function(){ return !cloud || !!session; },
     userEmail: function(){ return session && session.user ? session.user.email : null; },
+    onLegacyFallback: function(fn){ onLegacyFallback = fn; },
 
     init: function(onAuthChange){
       if(!cloud) return Promise.resolve();
@@ -70,7 +109,9 @@
 
     listCharacters: function(){
       if(!cloud) return Promise.resolve(lsGet(LS_CHARS));
-      return sb.from('characters').select('id,name,gender,hair,eyes,skin,photo,hairstyle,glasses,hat,outfit,trait,nickname').order('created_at').then(function(r){ fail(r.error); return r.data; });
+      return withColumns(function(sel){
+        return sb.from('characters').select(sel).order('created_at');
+      }).then(function(r){ return r.data; });
     },
     saveCharacter: function(c){
       var row = clean(c);
@@ -85,8 +126,11 @@
         lsSet(LS_CHARS, all);
         return Promise.resolve(c.id ? Object.assign({ id: c.id }, row) : c);
       }
-      var q = c.id ? sb.from('characters').update(row).eq('id', c.id) : sb.from('characters').insert(row);
-      return q.select('id,name,gender,hair,eyes,skin,photo,hairstyle,glasses,hat,outfit,trait,nickname').single().then(function(r){ fail(r.error); return r.data; });
+      return withColumns(function(sel){
+        var payload = payloadFor(row);
+        var q = c.id ? sb.from('characters').update(payload).eq('id', c.id) : sb.from('characters').insert(payload);
+        return q.select(sel).single();
+      }).then(function(r){ return r.data; });
     },
     saveManyCharacters: function(list){
       if(!cloud){
@@ -95,7 +139,10 @@
         lsSet(LS_CHARS, all.concat(added));
         return Promise.resolve(added);
       }
-      return sb.from('characters').insert(list.map(clean)).select('id,name,gender,hair,eyes,skin,photo,hairstyle,glasses,hat,outfit,trait,nickname').then(function(r){ fail(r.error); return r.data; });
+      var rows = list.map(clean);
+      return withColumns(function(sel){
+        return sb.from('characters').insert(rows.map(payloadFor)).select(sel);
+      }).then(function(r){ return r.data; });
     },
     deleteCharacter: function(id){
       if(!cloud){
