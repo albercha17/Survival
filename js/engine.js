@@ -790,7 +790,16 @@
         version: 4,
         pace: opts.pace || 'media',
         mode: mode,
-        biome: A.BIOMES && A.BIOMES.some(function(b){ return b.id === opts.biome; }) ? opts.biome : null,
+        biome: (function(){
+          // "Aleatorio" en el selector se guarda como opts.biome === null/undefined
+          // (o cualquier id invalido): antes eso dejaba game.biome en null para
+          // TODA la partida, sin tema visual real pese al texto "cada partida
+          // sortea un paisaje distinto". Ahora se sortea un bioma concreto.
+          var real = A.BIOMES && A.BIOMES.filter(function(b){ return b.id; });
+          if(!real || !real.length) return null;
+          if(real.some(function(b){ return b.id === opts.biome; })) return opts.biome;
+          return choice(real).id;
+        })(),
         calm: 0,
         streak: 0,
         tributes: tributes,

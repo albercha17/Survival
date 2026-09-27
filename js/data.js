@@ -59,23 +59,31 @@
     return out;
   }
   function payloadFor(row){ return useLegacyCols ? legacyRow(row) : row; }
-  function isMissingColumnError(err){
-    if(!err) return false;
-    if(err.code === '42703' || err.code === 'PGRST204' || err.code === 'PGRST205') return true;
-    return /column .* does not exist|could not find .* column/i.test(err.message || '');
-  }
   // factory(selectCols) debe devolver una promesa de Supabase ({data, error}).
   // Ojo: factory debe leer el juego de columnas del payload consultando
   // useLegacyCols en el momento en que se llama (no capturarlo antes),
   // para que el reintento use automáticamente las columnas antiguas.
+  //
+  // No se intenta reconocer el error exacto ("column ... does not exist",
+  // 42703, PGRST204...): solo se confirmó una de esas formas contra la base
+  // de datos real y solo para un select; un insert/update con una clave
+  // desconocida en el cuerpo podría dar un mensaje distinto. En vez de
+  // apostar a adivinarlo, ante CUALQUIER error con las columnas nuevas se
+  // reintenta una vez con las columnas antiguas, y solo si ese reintento
+  // funciona de verdad nos quedamos en modo antiguo; si también falla, se
+  // devuelve el error original (más útil para diagnosticar) y no se cambia
+  // de modo, para no camuflar un fallo distinto (permisos, red...) como si
+  // fuera de columnas.
   function withColumns(factory){
     return factory(cols()).then(function(r){
-      if(r.error && !useLegacyCols && isMissingColumnError(r.error)){
-        useLegacyCols = true;
+      if(!r.error || useLegacyCols) return r;
+      var firstError = r.error;
+      useLegacyCols = true;
+      return factory(cols()).then(function(r2){
+        if(r2.error){ useLegacyCols = false; return { data: null, error: firstError }; }
         if(!legacyNotified){ legacyNotified = true; if(onLegacyFallback) onLegacyFallback(); }
-        return factory(cols());
-      }
-      return r;
+        return r2;
+      });
     }).then(function(r){ fail(r.error); return r; });
   }
 
