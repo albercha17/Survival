@@ -80,12 +80,12 @@
 
   /* ---------- UI helpers ---------- */
   var toastTimer = null;
-  function toast(msg){
+  function toast(msg, ms){
     var t = $('toast');
     t.textContent = msg;
     t.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ t.hidden = true; }, 3200);
+    toastTimer = setTimeout(function(){ t.hidden = true; }, ms || 3200);
   }
   function openSheet(id){
     $('sheet-backdrop').hidden = false;
@@ -1126,6 +1126,9 @@
     wire();
     spawnEmbers();
     renderApp();
+    if(Store.onLegacyFallback) Store.onLegacyFallback(function(){
+      toast('Tu base de datos aún no tiene las columnas nuevas (peinado, mote, rasgo…): los personajes se guardan sin esos datos hasta que actualices supabase/schema.sql.', 7000);
+    });
     Store.init(onAuthChange)
       .then(refreshData)
       .then(seedLocalOnFirstRun)
