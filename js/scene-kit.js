@@ -111,6 +111,7 @@
     this.hasDeath = this.vi >= 0;
     if(this.vi < 0) this.vi = this.n - 1;
     this.propName = entry.prop;
+    this.biome = entry.biome || null;
     this.reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     this.entry = entry;
   }

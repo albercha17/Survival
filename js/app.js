@@ -19,10 +19,10 @@
     { name: 'Tobin', gender: 'chico', hair: 'rubio',     eyes: 'marrones' }
   ];
 
-  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [], pace: 'media', mode: 'todos', teams: 2 };
+  var saved = { phase: 'setup', selectedIds: [], game: null, queue: [], pace: 'media', mode: 'todos', teams: 2, biome: null };
   var MODES = ['todos', 'equipos', 'parejas'];
   var PACES = ['corta', 'media', 'larga'];
-  var prefs = { voice: false, speed: 1 };
+  var prefs = { voice: false, speed: 1, sound: true };
   var data = { characters: [], lists: [] };
   var ui = { tab: 'chars', draft: null, loading: true };
 
@@ -52,11 +52,12 @@
           queue: Array.isArray(raw.queue) ? raw.queue.filter(validEntry) : [],
           pace: PACES.indexOf(raw.pace) !== -1 ? raw.pace : 'media',
           mode: MODES.indexOf(raw.mode) !== -1 ? raw.mode : 'todos',
-          teams: Math.max(2, Math.min(8, parseInt(raw.teams, 10) || 2))
+          teams: Math.max(2, Math.min(8, parseInt(raw.teams, 10) || 2)),
+          biome: A.BIOMES && A.BIOMES.some(function(b){ return b.id === raw.biome; }) ? raw.biome : null
         };
       }
       var p = JSON.parse(localStorage.getItem(PREF_KEY));
-      if(p) prefs = { voice: !!p.voice, speed: SPEEDS.indexOf(p.speed) !== -1 ? p.speed : 1 };
+      if(p) prefs = { voice: !!p.voice, speed: SPEEDS.indexOf(p.speed) !== -1 ? p.speed : 1, sound: p.sound !== false };
     } catch(e){}
     if((saved.phase === 'playing' || saved.phase === 'victory') && !saved.game) saved.phase = 'setup';
   }
@@ -88,11 +89,11 @@
   }
   function openSheet(id){
     $('sheet-backdrop').hidden = false;
-    ['roster-sheet', 'char-sheet', 'account-sheet'].forEach(function(s){ $(s).hidden = s !== id; });
+    ['roster-sheet', 'char-sheet', 'account-sheet', 'influence-sheet'].forEach(function(s){ $(s).hidden = s !== id; });
   }
   function closeSheets(){
     $('sheet-backdrop').hidden = true;
-    ['roster-sheet', 'char-sheet', 'account-sheet'].forEach(function(s){ $(s).hidden = true; });
+    ['roster-sheet', 'char-sheet', 'account-sheet', 'influence-sheet'].forEach(function(s){ $(s).hidden = true; });
   }
   function confirmTwice(key, btn, armedText, action){
     if(armed[key]){
@@ -231,6 +232,7 @@
     renderLists();
     renderMode();
     renderPace();
+    renderBiome();
   }
 
   var PACE_HINT = {
@@ -272,6 +274,13 @@
       b.setAttribute('aria-checked', on);
     });
     $('pace-hint').textContent = PACE_HINT[saved.pace] || '';
+  }
+  function renderBiome(){
+    if(!A.BIOMES) return;
+    $('biome-pills').innerHTML = A.BIOMES.map(function(b){
+      var on = saved.biome === b.id;
+      return '<button class="pill' + (on ? ' active' : '') + '" type="button" role="radio" aria-checked="' + on + '" data-biome="' + (b.id || '') + '">' + b.label + '</button>';
+    }).join('');
   }
 
   function onCharListClick(ev){
@@ -351,10 +360,13 @@
   function openCharEditor(id){
     var c = id ? data.characters.filter(function(x){ return x.id === id; })[0] : null;
     ui.draft = c
-      ? { id: c.id, name: c.name, gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin || 'claro', photo: c.photo || null }
-      : { name: '', gender: rand(2) ? 'chica' : 'chico', hair: A.HAIR[rand(A.HAIR.length)].id, eyes: A.EYES[rand(A.EYES.length)].id, skin: 'claro', photo: null };
+      ? { id: c.id, name: c.name, nickname: c.nickname || '', gender: c.gender, hair: c.hair, eyes: c.eyes, skin: c.skin || 'claro', photo: c.photo || null,
+          hairstyle: c.hairstyle || 'corto', glasses: c.glasses || 'ninguna', hat: c.hat || 'ninguno', outfit: c.outfit || 'oliva', trait: c.trait || null }
+      : { name: '', nickname: '', gender: rand(2) ? 'chica' : 'chico', hair: A.HAIR[rand(A.HAIR.length)].id, eyes: A.EYES[rand(A.EYES.length)].id, skin: 'claro', photo: null,
+          hairstyle: A.HAIRSTYLES[rand(A.HAIRSTYLES.length)].id, glasses: 'ninguna', hat: 'ninguno', outfit: A.OUTFITS[rand(A.OUTFITS.length)].id, trait: null };
     $('char-sheet-title').textContent = c ? 'Editar personaje' : 'Nuevo personaje';
     $('char-name').value = ui.draft.name;
+    $('char-nickname').value = ui.draft.nickname;
     $('btn-delete-char').hidden = !c;
     $('char-error').textContent = '';
     showCrop(false);
@@ -415,9 +427,24 @@
         return '<button class="swatch" type="button" role="radio" aria-checked="' + (current === o.id) + '" data-' + attr + '="' + o.id + '"><i style="background:' + o.hex + '"></i>' + o.label + '</button>';
       }).join('');
     }
+    function pills(list, current, attr){
+      return list.map(function(o){
+        var on = current === o.id;
+        return '<button class="pill' + (on ? ' active' : '') + '" type="button" role="radio" aria-checked="' + on + '" data-' + attr + '="' + o.id + '">' + o.label + '</button>';
+      }).join('');
+    }
     $('hair-swatches').innerHTML = swatches(A.HAIR, d.hair, 'hair');
     $('eyes-swatches').innerHTML = swatches(A.EYES, d.eyes, 'eyes');
     $('skin-swatches').innerHTML = swatches(A.SKIN, d.skin, 'skin');
+    $('hairstyle-pills').innerHTML = pills(A.HAIRSTYLES, d.hairstyle, 'hairstyle');
+    $('glasses-pills').innerHTML = pills(A.GLASSES, d.glasses, 'glasses');
+    $('hat-pills').innerHTML = pills(A.HATS, d.hat, 'hat');
+    $('outfit-swatches').innerHTML = swatches(A.OUTFITS, d.outfit, 'outfit');
+    var traitList = [{ id: '', label: 'Aleatorio' }].concat(A.TRAITS ? Object.keys(A.TRAITS).map(function(id){
+      var t = A.TRAITS[id];
+      return { id: id, label: (d.gender === 'chica' ? t.f : t.m).replace(/^./, function(c){ return c.toUpperCase(); }) };
+    }) : []);
+    $('trait-pills').innerHTML = pills(traitList, d.trait || '', 'trait');
   }
   function onEditorClick(ev){
     var t = ev.target.closest('button');
@@ -427,12 +454,18 @@
     else if(t.hasAttribute('data-hair')) d.hair = t.getAttribute('data-hair');
     else if(t.hasAttribute('data-eyes')) d.eyes = t.getAttribute('data-eyes');
     else if(t.hasAttribute('data-skin')) d.skin = t.getAttribute('data-skin');
+    else if(t.hasAttribute('data-hairstyle')) d.hairstyle = t.getAttribute('data-hairstyle');
+    else if(t.hasAttribute('data-glasses')) d.glasses = t.getAttribute('data-glasses');
+    else if(t.hasAttribute('data-hat')) d.hat = t.getAttribute('data-hat');
+    else if(t.hasAttribute('data-outfit')) d.outfit = t.getAttribute('data-outfit');
+    else if(t.hasAttribute('data-trait')) d.trait = t.getAttribute('data-trait') || null;
     else return;
     renderEditor();
   }
   function saveCharacter(){
     var d = ui.draft;
     d.name = $('char-name').value.trim();
+    d.nickname = $('char-nickname').value.trim();
     if(!d.name){ $('char-error').textContent = 'Escribe un nombre.'; return; }
     var isNew = !d.id;
     return guarded($('btn-save-char'), function(){
@@ -630,6 +663,17 @@
     v.setAttribute('aria-label', prefs.voice ? 'Voz activada' : 'Voz desactivada');
     v.innerHTML = (prefs.voice ? IC.spk : IC.mute) + '<span>Voz</span>';
     $('btn-skip').innerHTML = IC.skip + '<span>Saltar</span>';
+    var snd = $('btn-sound');
+    snd.setAttribute('aria-pressed', prefs.sound ? 'true' : 'false');
+    snd.innerHTML = (prefs.sound ? IC.spk : IC.mute) + '<span>Sonido</span>';
+    if(A.Sound && !A.Sound.isSupported()){ snd.disabled = true; }
+  }
+  function updateInfluenceBadge(){
+    var b = $('influence-badge');
+    if(!b) return;
+    var n = saved.game ? saved.game.influence : 0;
+    b.textContent = n;
+    b.hidden = !saved.game || saved.game.finished;
   }
 
   function renderGame(){
@@ -643,6 +687,7 @@
     log.innerHTML = '';
     saved.game.log.forEach(function(e){ log.insertBefore(historyRow(e), log.firstChild); });
     updateHeader();
+    updateInfluenceBadge();
     var last = lastLogged();
     if(last){
       renderStage(last, true);
@@ -668,6 +713,7 @@
     saved.game.log.push(entry);
     persist();
     updateHeader();
+    updateInfluenceBadge();
     addHistory(entry);
     current = null;
   }
@@ -691,6 +737,7 @@
     current = entry;
     renderStage(entry, false);
     startBar(entry);
+    if(A.Sound) A.Sound.play(entry.type);
     setTimeout(function(){ if(current === entry) killFlash(entry); }, 1200 / prefs.speed);
     Narrator.narrate($('stage-text'), entry.text, { voice: prefs.voice, speed: prefs.speed }, function(){
       commit(entry);
@@ -720,7 +767,7 @@
 
   function beginGame(characters){
     stopNarration();
-    var game = Engine.newGame(characters, { pace: saved.pace, mode: saved.mode, teams: saved.teams });
+    var game = Engine.newGame(characters, { pace: saved.pace, mode: saved.mode, teams: saved.teams, biome: saved.biome });
     saved.phase = 'playing';
     saved.game = game;
     saved.queue = Engine.introEntries ? Engine.introEntries(game) : [Engine.introEntry(game)];
@@ -728,6 +775,11 @@
     playing = true;
     renderGame();
     if(prefs.voice) Narrator.unlock();
+    if(A.Sound){
+      A.Sound.unlock();
+      A.Sound.setEnabled(prefs.sound);
+      A.Sound.play('ui_start');
+    }
     showNext();
   }
 
@@ -810,9 +862,9 @@
   }
 
   function replaySameCast(){
-    var chars = saved.game.tributes.filter(function(t){ return !t.baby; }).map(function(t){
-      return { id: t.id, name: t.name, gender: t.gender, hair: t.hair, eyes: t.eyes, skin: t.skin, photo: t.photo };
-    });
+    var ids = saved.game.tributes.filter(function(t){ return !t.baby; }).map(function(t){ return t.id; });
+    var chars = ids.map(function(id){ return data.characters.filter(function(c){ return c.id === id; })[0]; }).filter(Boolean);
+    if(chars.length < 2){ toast('Algún personaje ya no está disponible; edita el reparto para volver a jugar.'); return; }
     beginGame(chars);
   }
 
@@ -879,8 +931,17 @@
     persistPrefs();
     updateControls();
   }
+  function toggleSound(){
+    if(!A.Sound || !A.Sound.isSupported()){ toast('Este navegador no admite sonido.'); return; }
+    prefs.sound = !prefs.sound;
+    A.Sound.unlock();
+    A.Sound.setEnabled(prefs.sound);
+    persistPrefs();
+    updateControls();
+  }
   function skip(){
     if(saved.phase !== 'playing') return;
+    if(A.Sound) A.Sound.play('ui_tap');
     clearTimeout(timer);
     Narrator.cancel();
     if(busy && current){
@@ -889,6 +950,70 @@
     }
     busy = false;
     showNext();
+  }
+
+  /* ---------- influencia del público ---------- */
+  function renderInfluence(){
+    var g = saved.game;
+    if(!g) return;
+    var n = g.influence || 0;
+    $('influence-count-hint').textContent = n > 0
+      ? 'Te quedan ' + n + (n === 1 ? ' intervención.' : ' intervenciones.')
+      : 'Ya has usado todas tus intervenciones en esta partida.';
+    var pending = g.pendingSpecial;
+    $('special-pending-hint').hidden = !pending;
+    if(pending){
+      var spec = (A.SPECIAL_DAYS || []).filter(function(x){ return x.id === pending.kind; })[0];
+      $('special-pending-hint').textContent = 'Ya has convocado «' + (spec ? spec.label : pending.kind) + '»: se notará mañana.';
+    }
+    $('special-pills').innerHTML = (A.SPECIAL_DAYS || []).map(function(sp){
+      var disabled = n <= 0 || !!pending || g.finished;
+      return '<button class="pill" type="button" data-special="' + sp.id + '"' + (disabled ? ' disabled' : '') + '>' + sp.label + '</button>';
+    }).join('');
+    var alive = g.tributes.filter(function(t){ return t.alive && !t.baby; });
+    $('sponsor-hint').textContent = alive.length ? 'Le regalas un objeto sorpresa de los patrocinadores.' : '';
+    $('sponsor-list').innerHTML = alive.map(function(t){
+      var has = t.item && A.ITEMS[t.item];
+      var disabled = n <= 0 || g.finished;
+      return '<div class="sponsor-row"><div class="sponsor-who">' + A.avatar(t, 32) +
+        '<span class="sponsor-name">' + esc(t.name) + (has ? '<span class="sponsor-item">Lleva ' + esc(A.ITEMS[t.item].short) + '</span>' : '') + '</span></div>' +
+        '<button class="btn-small' + (disabled ? ' quiet' : '') + '" type="button" data-sponsor="' + t.id + '"' + (disabled ? ' disabled' : '') + '>Patrocinar</button></div>';
+    }).join('') || '<p class="hint">No queda nadie con vida a quien patrocinar.</p>';
+  }
+  function queueEntry(entry){
+    if(!busy && saved.queue.length === 0){
+      saved.queue.push(entry);
+      persist();
+      if(playing) showNext();
+    } else {
+      saved.queue.splice(1, 0, entry);
+      persist();
+    }
+  }
+  function onInfluenceClick(ev){
+    var g = saved.game;
+    if(!g) return;
+    var sp = ev.target.closest('[data-special]');
+    if(sp && !sp.disabled){
+      if(Engine.declareSpecialDay(g, sp.getAttribute('data-special'))){
+        persist();
+        updateInfluenceBadge();
+        renderInfluence();
+        toast('Convocado para mañana.');
+      }
+      return;
+    }
+    var sb = ev.target.closest('[data-sponsor]');
+    if(sb && !sb.disabled){
+      var entry = Engine.sponsor(g, sb.getAttribute('data-sponsor'));
+      if(entry){
+        queueEntry(entry);
+        updateInfluenceBadge();
+        renderInfluence();
+        toast('Patrocinio enviado.');
+      }
+      return;
+    }
   }
 
   /* ---------- ambience & wiring ---------- */
@@ -936,6 +1061,13 @@
       persist();
       renderPace();
     });
+    $('biome-pills').addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-biome]');
+      if(!b) return;
+      saved.biome = b.getAttribute('data-biome') || null;
+      persist();
+      renderBiome();
+    });
     $('btn-account').addEventListener('click', openAccount);
     $('btn-close-account').addEventListener('click', closeSheets);
     $('account-body').addEventListener('click', onAccountClick);
@@ -954,6 +1086,9 @@
     $('sheet-backdrop').addEventListener('click', closeSheets);
     $('btn-roster').addEventListener('click', function(){ renderRoster(); openSheet('roster-sheet'); });
     $('btn-close-roster').addEventListener('click', closeSheets);
+    $('btn-influence').addEventListener('click', function(){ renderInfluence(); openSheet('influence-sheet'); });
+    $('btn-close-influence').addEventListener('click', closeSheets);
+    $('influence-sheet').addEventListener('click', onInfluenceClick);
     $('btn-reset-game').addEventListener('click', function(){ $('confirm-reset-bar').hidden = false; });
     $('btn-cancel-reset').addEventListener('click', function(){ $('confirm-reset-bar').hidden = true; });
     $('btn-confirm-reset').addEventListener('click', backToSetup);
@@ -961,6 +1096,7 @@
     $('btn-play').addEventListener('click', togglePlay);
     $('btn-speed').addEventListener('click', cycleSpeed);
     $('btn-voice').addEventListener('click', toggleVoice);
+    $('btn-sound').addEventListener('click', toggleSound);
     $('btn-skip').addEventListener('click', skip);
     $('stage').addEventListener('click', function(){ if(saved.phase === 'playing'){ $('stage-hint').hidden = true; skip(); } });
     $('tribute-strip').addEventListener('click', function(){ renderRoster(); openSheet('roster-sheet'); });

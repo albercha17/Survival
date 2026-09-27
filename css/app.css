@@ -423,3 +423,42 @@ button { -webkit-tap-highlight-color: transparent; }
 .log-entry.type-family { border-left-color: #c8a2ff; }
 .log-tag.type-family { color: #c8a2ff; }
 .victory-family { margin: -6px 0 12px; color: #c8a2ff; font-size: .95rem; }
+
+/* ---------- Píldoras (peinado, gafas, sombrero, rasgo, escenario, día especial) ---------- */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: .82rem;
+  cursor: pointer;
+}
+.pill.active, .pill[aria-checked="true"] { border-color: var(--gold); color: var(--ink); background: rgba(205,162,63,.12); }
+.pill:disabled { opacity: .4; cursor: default; }
+
+/* ---------- Insignia de influencia ---------- */
+#btn-influence { position: relative; }
+.badge {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 17px; height: 17px; padding: 0 3px;
+  border-radius: 999px;
+  background: var(--flame-1);
+  color: #fff;
+  font-size: .62rem; font-weight: 700; line-height: 17px; text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* ---------- Hoja de influencia ---------- */
+.sponsor-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sponsor-row:last-child { border-bottom: none; }
+.sponsor-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sponsor-name { display: flex; flex-direction: column; font-size: .88rem; color: var(--ink); }
+.sponsor-item { font-size: .72rem; color: var(--ink-faint); }
+#special-pending-hint { color: var(--gold); }
